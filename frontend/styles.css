@@ -1,10 +1,12 @@
 :root {
-  /* Idealista-inspired palette */
-  --green:        #7ac142;   /* primary green */
-  --green-dark:   #66a734;
-  --green-soft:   #ecf7df;
-  --yellow:       #ffe400;   /* accent / highlights */
-  --yellow-dark:  #f0d500;
+  /* Casahunt palette */
+  --green:        #ddf273;   /* primary */
+  --green-dark:   #c9e254;
+  --green-darker: #9fb23a;   /* for text on pale green backgrounds */
+  --green-soft:   #f4fad8;
+  --pink:         #b62682;   /* accent */
+  --pink-dark:    #961e6c;
+  --pink-soft:    #f7e3ef;
 
   --bg:           #ffffff;
   --bg-soft:      #f5f7f9;
@@ -42,7 +44,13 @@ body {
 main { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
 h1, h2, h3 { letter-spacing: -0.01em; color: var(--fg); }
-h1 { margin: 0 0 .15rem; font-size: 1.75rem; font-weight: 700; }
+h1 {
+  margin: 0 0 .15rem;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--pink);
+  letter-spacing: -0.02em;
+}
 .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
 
 section {
@@ -69,13 +77,13 @@ input, select {
 input::placeholder { color: var(--muted-soft); }
 input:focus, select:focus {
   outline: none;
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(122,193,66,.22);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(182,38,130,.18);
 }
-input[type="checkbox"] { width: auto; accent-color: var(--green); }
+input[type="checkbox"] { width: auto; accent-color: var(--pink); }
 
 button {
-  background: var(--green);
+  background: var(--pink);
   color: white;
   border: 0;
   padding: .6rem 1rem;
@@ -85,7 +93,7 @@ button {
   font-weight: 600;
   transition: background .12s, transform .05s;
 }
-button:hover { background: var(--green-dark); }
+button:hover { background: var(--pink-dark); }
 button:active { transform: translateY(1px); }
 button.secondary {
   background: transparent;
@@ -154,8 +162,8 @@ button.icon-btn:hover { background: var(--bg-soft); color: var(--fg); }
   gap: .3rem .4rem;
 }
 .filter-summary .pill {
-  background: var(--green-soft);
-  color: var(--green-dark);
+  background: var(--green);
+  color: var(--fg);
   padding: .12rem .5rem;
   border-radius: 999px;
   font-size: .78rem;
@@ -265,9 +273,9 @@ fieldset legend {
 }
 .chip-toggle:hover { border-color: #cdd3d9; }
 .chip-toggle:has(input:checked) {
-  background: var(--green-soft);
-  border-color: var(--green);
-  color: var(--green-dark);
+  background: var(--green);
+  border-color: var(--green-darker);
+  color: var(--fg);
   font-weight: 600;
 }
 .chip-toggle input { display: none; }
@@ -299,8 +307,8 @@ fieldset legend {
   transition: border-color .15s, box-shadow .15s;
 }
 .loc-input-wrap.focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(122,193,66,.22);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(182,38,130,.18);
 }
 .loc-input-wrap input {
   border: 0;
@@ -317,8 +325,8 @@ fieldset legend {
   align-items: center;
   gap: .3rem;
   padding: .25rem .4rem .25rem .65rem;
-  background: var(--green-soft);
-  color: var(--green-dark);
+  background: var(--green);
+  color: var(--fg);
   border-radius: 999px;
   font-size: .82rem;
   font-weight: 500;
@@ -331,7 +339,7 @@ fieldset legend {
 .loc-chip span { overflow: hidden; text-overflow: ellipsis; }
 .loc-chip button {
   background: transparent;
-  color: var(--green-dark);
+  color: var(--green-darker);
   padding: 0 .3rem;
   font-size: 1rem;
   line-height: 1;
@@ -339,7 +347,7 @@ fieldset legend {
   cursor: pointer;
   border-radius: 999px;
 }
-.loc-chip button:hover { background: rgba(122,193,66,.25); }
+.loc-chip button:hover { background: rgba(0,0,0,.08); }
 
 .loc-dropdown {
   position: absolute;
@@ -371,9 +379,9 @@ fieldset legend {
   font-weight: 500;
 }
 .loc-result-name mark {
-  background: var(--yellow);
-  color: var(--fg);
-  padding: 0 1px;
+  background: var(--pink);
+  color: white;
+  padding: 0 2px;
   border-radius: 2px;
 }
 .loc-result-meta {
@@ -392,7 +400,7 @@ fieldset legend {
   letter-spacing: .03em;
   margin-right: .4rem;
 }
-.loc-result-type.district { background: var(--yellow); color: var(--fg); }
+.loc-result-type.district { background: var(--pink); color: white; }
 .loc-empty { padding: .65rem .55rem; color: var(--muted); font-size: .85rem; }
 
 @media (max-width: 560px) {
