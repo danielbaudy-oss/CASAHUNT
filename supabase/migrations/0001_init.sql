@@ -57,7 +57,7 @@ create table if not exists casahunt.filters (
   chat_id        bigint not null default casahunt.current_chat_id() references casahunt.users(chat_id) on delete cascade,
   name           text   not null default 'default',
   city           text   not null default 'barcelona',
-  source         text   not null default 'idealista',    -- idealista | fotocasa
+  source         text   not null default 'idealista',    -- DEPRECATED — see 0002 migration; use `sources` text[]
   price_min      int,
   price_max      int,
   size_min_m2    int,

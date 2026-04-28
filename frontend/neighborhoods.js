@@ -1,0 +1,116 @@
+// Barcelona — 10 districts, ~73 neighborhoods.
+// Slugs match Idealista's URL conventions where reasonable.
+// Expand/correct as needed; this is the user-facing source of truth.
+
+export const NEIGHBORHOODS_BCN = [
+  // Ciutat Vella
+  { district: "Ciutat Vella", name: "El Raval",                 slug: "el-raval" },
+  { district: "Ciutat Vella", name: "El Gòtic",                 slug: "el-gotic" },
+  { district: "Ciutat Vella", name: "La Barceloneta",           slug: "la-barceloneta" },
+  { district: "Ciutat Vella", name: "Sant Pere, Santa Caterina i la Ribera", slug: "sant-pere-santa-caterina-la-ribera" },
+
+  // Eixample
+  { district: "Eixample", name: "L'Antiga Esquerra de l'Eixample", slug: "antiga-esquerra-eixample" },
+  { district: "Eixample", name: "La Nova Esquerra de l'Eixample", slug: "nova-esquerra-eixample" },
+  { district: "Eixample", name: "La Dreta de l'Eixample",          slug: "dreta-eixample" },
+  { district: "Eixample", name: "El Fort Pienc",                    slug: "fort-pienc" },
+  { district: "Eixample", name: "La Sagrada Família",               slug: "sagrada-familia" },
+  { district: "Eixample", name: "Sant Antoni",                      slug: "sant-antoni" },
+
+  // Sants-Montjuïc
+  { district: "Sants-Montjuïc", name: "El Poble-sec",                slug: "poble-sec" },
+  { district: "Sants-Montjuïc", name: "La Marina del Prat Vermell",  slug: "marina-prat-vermell" },
+  { district: "Sants-Montjuïc", name: "La Marina de Port",           slug: "marina-de-port" },
+  { district: "Sants-Montjuïc", name: "La Font de la Guatlla",       slug: "font-de-la-guatlla" },
+  { district: "Sants-Montjuïc", name: "Hostafrancs",                 slug: "hostafrancs" },
+  { district: "Sants-Montjuïc", name: "La Bordeta",                  slug: "bordeta" },
+  { district: "Sants-Montjuïc", name: "Sants-Badal",                 slug: "sants-badal" },
+  { district: "Sants-Montjuïc", name: "Sants",                       slug: "sants" },
+
+  // Les Corts
+  { district: "Les Corts", name: "Les Corts",                      slug: "les-corts" },
+  { district: "Les Corts", name: "La Maternitat i Sant Ramon",     slug: "maternitat-sant-ramon" },
+  { district: "Les Corts", name: "Pedralbes",                      slug: "pedralbes" },
+
+  // Sarrià-Sant Gervasi
+  { district: "Sarrià-Sant Gervasi", name: "Vallvidrera, el Tibidabo i les Planes", slug: "vallvidrera-tibidabo-planes" },
+  { district: "Sarrià-Sant Gervasi", name: "Sarrià",                               slug: "sarria" },
+  { district: "Sarrià-Sant Gervasi", name: "Les Tres Torres",                      slug: "tres-torres" },
+  { district: "Sarrià-Sant Gervasi", name: "Sant Gervasi - La Bonanova",           slug: "sant-gervasi-bonanova" },
+  { district: "Sarrià-Sant Gervasi", name: "Sant Gervasi - Galvany",               slug: "sant-gervasi-galvany" },
+  { district: "Sarrià-Sant Gervasi", name: "El Putxet i el Farró",                 slug: "putxet-farro" },
+
+  // Gràcia
+  { district: "Gràcia", name: "Vallcarca i els Penitents",         slug: "vallcarca-penitents" },
+  { district: "Gràcia", name: "El Coll",                           slug: "el-coll" },
+  { district: "Gràcia", name: "La Salut",                          slug: "la-salut" },
+  { district: "Gràcia", name: "La Vila de Gràcia",                 slug: "vila-de-gracia" },
+  { district: "Gràcia", name: "El Camp d'en Grassot i Gràcia Nova", slug: "camp-den-grassot-gracia-nova" },
+
+  // Horta-Guinardó
+  { district: "Horta-Guinardó", name: "El Baix Guinardó",          slug: "baix-guinardo" },
+  { district: "Horta-Guinardó", name: "Can Baró",                  slug: "can-baro" },
+  { district: "Horta-Guinardó", name: "El Guinardó",               slug: "el-guinardo" },
+  { district: "Horta-Guinardó", name: "La Font d'en Fargues",      slug: "font-den-fargues" },
+  { district: "Horta-Guinardó", name: "El Carmel",                 slug: "el-carmel" },
+  { district: "Horta-Guinardó", name: "La Teixonera",              slug: "la-teixonera" },
+  { district: "Horta-Guinardó", name: "Sant Genís dels Agudells",  slug: "sant-genis-agudells" },
+  { district: "Horta-Guinardó", name: "Montbau",                   slug: "montbau" },
+  { district: "Horta-Guinardó", name: "La Vall d'Hebron",          slug: "vall-hebron" },
+  { district: "Horta-Guinardó", name: "La Clota",                  slug: "la-clota" },
+  { district: "Horta-Guinardó", name: "Horta",                     slug: "horta" },
+
+  // Nou Barris
+  { district: "Nou Barris", name: "Vilapicina i la Torre Llobeta", slug: "vilapicina-torre-llobeta" },
+  { district: "Nou Barris", name: "Porta",                         slug: "porta" },
+  { district: "Nou Barris", name: "El Turó de la Peira",           slug: "turo-de-la-peira" },
+  { district: "Nou Barris", name: "Can Peguera",                   slug: "can-peguera" },
+  { district: "Nou Barris", name: "La Guineueta",                  slug: "guineueta" },
+  { district: "Nou Barris", name: "Canyelles",                     slug: "canyelles" },
+  { district: "Nou Barris", name: "Les Roquetes",                  slug: "roquetes" },
+  { district: "Nou Barris", name: "Verdun",                        slug: "verdun" },
+  { district: "Nou Barris", name: "La Prosperitat",                slug: "prosperitat" },
+  { district: "Nou Barris", name: "La Trinitat Nova",              slug: "trinitat-nova" },
+  { district: "Nou Barris", name: "Torre Baró",                    slug: "torre-baro" },
+  { district: "Nou Barris", name: "Ciutat Meridiana",              slug: "ciutat-meridiana" },
+  { district: "Nou Barris", name: "Vallbona",                      slug: "vallbona" },
+
+  // Sant Andreu
+  { district: "Sant Andreu", name: "La Trinitat Vella",            slug: "trinitat-vella" },
+  { district: "Sant Andreu", name: "Baró de Viver",                slug: "baro-de-viver" },
+  { district: "Sant Andreu", name: "El Bon Pastor",                slug: "bon-pastor" },
+  { district: "Sant Andreu", name: "Sant Andreu",                  slug: "sant-andreu" },
+  { district: "Sant Andreu", name: "La Sagrera",                   slug: "la-sagrera" },
+  { district: "Sant Andreu", name: "El Congrés i els Indians",     slug: "congres-indians" },
+  { district: "Sant Andreu", name: "Navas",                        slug: "navas" },
+
+  // Sant Martí
+  { district: "Sant Martí", name: "El Camp de l'Arpa del Clot",    slug: "camp-de-larpa-del-clot" },
+  { district: "Sant Martí", name: "El Clot",                       slug: "el-clot" },
+  { district: "Sant Martí", name: "El Parc i la Llacuna del Poblenou", slug: "parc-llacuna-poblenou" },
+  { district: "Sant Martí", name: "La Vila Olímpica del Poblenou", slug: "vila-olimpica-poblenou" },
+  { district: "Sant Martí", name: "El Poblenou",                   slug: "poblenou" },
+  { district: "Sant Martí", name: "Diagonal Mar i el Front Marítim", slug: "diagonal-mar-front-maritim" },
+  { district: "Sant Martí", name: "El Besòs i el Maresme",         slug: "besos-maresme" },
+  { district: "Sant Martí", name: "Provençals del Poblenou",       slug: "provencals-poblenou" },
+  { district: "Sant Martí", name: "Sant Martí de Provençals",      slug: "sant-marti-provencals" },
+  { district: "Sant Martí", name: "La Verneda i la Pau",           slug: "verneda-pau" },
+];
+
+export function neighborhoodBySlug(slug) {
+  return NEIGHBORHOODS_BCN.find((n) => n.slug === slug) || null;
+}
+
+export function normalizeNeighborhoodSlugs(arr) {
+  // Accepts a mix of slugs or display names; returns canonical slugs that exist.
+  const bySlug = new Map(NEIGHBORHOODS_BCN.map((n) => [n.slug, n]));
+  const byName = new Map(NEIGHBORHOODS_BCN.map((n) => [n.name.toLowerCase(), n]));
+  const out = [];
+  for (const raw of arr || []) {
+    const v = String(raw || "").trim();
+    if (!v) continue;
+    const hit = bySlug.get(v) || byName.get(v.toLowerCase());
+    if (hit) out.push(hit.slug);
+  }
+  return [...new Set(out)];
+}
