@@ -302,7 +302,7 @@ function openEditDialog(f) {
   selectedSlugs = new Set(normalizeNeighborhoodSlugs(f.neighborhoods));
   renderLocationChips();
   locInput.value = "";
-  renderLocDropdown("");
+  locDropdown.hidden = true;
 
   dlg.showModal();
 }
@@ -477,19 +477,24 @@ function pickLocation(r) {
   }
   locInput.value = "";
   renderLocationChips();
-  renderLocDropdown("");
+  locDropdown.hidden = true;
   locInput.focus();
 }
 
 locInput.addEventListener("focus", () => {
   locWrap.classList.add("focus");
-  renderLocDropdown(locInput.value);
+  // Only open the dropdown if there's something typed.
+  if (locInput.value.trim()) renderLocDropdown(locInput.value);
 });
 locInput.addEventListener("blur", () => {
   locWrap.classList.remove("focus");
   setTimeout(() => { locDropdown.hidden = true; }, 150);
 });
-locInput.addEventListener("input", (e) => renderLocDropdown(e.target.value));
+locInput.addEventListener("input", (e) => {
+  const v = e.target.value;
+  if (!v.trim()) { locDropdown.hidden = true; return; }
+  renderLocDropdown(v);
+});
 
 locInput.addEventListener("keydown", (e) => {
   const rows = locDropdown.querySelectorAll(".loc-result");
