@@ -1,6 +1,6 @@
-// Public config. Safe to commit — anon key is meant to be shipped to the client.
-// Fill these in once the Supabase project is set up.
+// Public config. Safe to commit — the publishable key is meant to ship to the
+// client. RLS enforces access via x-session-token header.
 export const config = {
-  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
-  supabaseAnonKey: "YOUR-ANON-KEY",
+  supabaseUrl: "https://kxbmlsbxnzvgzucxleoy.supabase.co",
+  supabaseAnonKey: "sb_publishable_qLmpXx5qeCO0cIdNqDMzeQ_HnLH4VS_",
 };

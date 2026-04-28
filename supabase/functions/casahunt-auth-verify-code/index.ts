@@ -1,7 +1,6 @@
-// auth-verify-code
+// casahunt-auth-verify-code
 // Body: { chat_id: number, code: string }
-// Validates against casahunt.auth_codes, marks consumed, creates a session.
-// Returns: { token: string, expires_at: string }
+// Validates the code, marks it consumed, creates a session, returns the token.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, preflight } from "../_shared/cors.ts";

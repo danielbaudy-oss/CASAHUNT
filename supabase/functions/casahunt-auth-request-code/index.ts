@@ -1,9 +1,9 @@
-// auth-request-code
+// casahunt-auth-request-code
 // Body: { chat_id: number }
-// 1. Generate 6-digit code, store in casahunt.auth_codes (10 min TTL)
-// 2. Ensure a casahunt.users row exists
-// 3. DM the code to the user via Telegram
-// Returns: { ok: true }
+// Generates a 6-digit code, stores in casahunt.auth_codes (10 min TTL),
+// DMs it via the casahunt Telegram bot.
+//
+// Uses CASAHUNT_BOT_TOKEN (not TELEGRAM_BOT_TOKEN — that belongs to dropping).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendMessage } from "../_shared/telegram.ts";
@@ -11,7 +11,7 @@ import { corsHeaders, preflight } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const TG_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+const TG_TOKEN = Deno.env.get("CASAHUNT_BOT_TOKEN")!;
 
 Deno.serve(async (req) => {
   const pf = preflight(req);
@@ -27,10 +27,8 @@ Deno.serve(async (req) => {
       db: { schema: "casahunt" },
     });
 
-    // Ensure user exists
     await db.from("users").upsert({ chat_id }, { onConflict: "chat_id" });
 
-    // Generate 6-digit code
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 

@@ -16,14 +16,14 @@ A walkthrough to go from empty repo to live alerts. Estimated time: ~45 min.
 3. Project Settings → API: copy **Project URL**, **anon key**, **service role key**.
 4. Install CLI: `npm i -g supabase`, then `supabase login`.
 5. Link: `supabase link --project-ref <mikan-ref>`.
-6. Set secrets:
+6. Set the casahunt-specific secret (do NOT overwrite `TELEGRAM_BOT_TOKEN` — that one belongs to `dropping`):
    ```bash
-   supabase secrets set TELEGRAM_BOT_TOKEN=... --project-ref <mikan-ref>
+   supabase secrets set CASAHUNT_BOT_TOKEN=<your-casahunt-bot-token> --project-ref <mikan-ref>
    ```
-7. Deploy functions:
+7. Edge Functions are deployed as `casahunt-auth-request-code` and `casahunt-auth-verify-code` (namespaced to avoid colliding with dropping's `auth-request-code`/`auth-verify-code`). They're already deployed via the Supabase MCP; to redeploy from source:
    ```bash
-   supabase functions deploy auth-request-code --project-ref <mikan-ref>
-   supabase functions deploy auth-verify-code  --project-ref <mikan-ref>
+   supabase functions deploy casahunt-auth-request-code --project-ref <mikan-ref>
+   supabase functions deploy casahunt-auth-verify-code  --project-ref <mikan-ref>
    ```
 
 ## 3. Frontend (GitHub Pages)

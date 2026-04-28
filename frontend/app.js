@@ -73,7 +73,7 @@ $("#send-code").addEventListener("click", async () => {
   try {
     const chat_id = Number($("#chat-id").value);
     if (!chat_id) throw new Error("chat id required");
-    await callFn("auth-request-code", { chat_id });
+    await callFn("casahunt-auth-request-code", { chat_id });
     authMsg.textContent = "Code sent to Telegram.";
   } catch (e) {
     authMsg.className = "msg error";
@@ -87,7 +87,7 @@ $("#verify-code").addEventListener("click", async () => {
   try {
     const chat_id = Number($("#chat-id").value);
     const code = $("#code").value.trim();
-    const session = await callFn("auth-verify-code", { chat_id, code });
+    const session = await callFn("casahunt-auth-verify-code", { chat_id, code });
     setSession(session);
     await renderFilters();
     show("filters");
