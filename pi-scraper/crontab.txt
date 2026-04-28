@@ -1,0 +1,5 @@
+# casahunt — Idealista scraper schedule (Pi local time).
+# Install with:  crontab /home/baudy/casahunt/pi-scraper/crontab.txt
+
+# Every 15 minutes: pull + scrape + notify.
+*/15 * * * * /home/baudy/casahunt/pi-scraper/run.sh >> /home/baudy/casahunt/pi-scraper/logs/run.log 2>&1

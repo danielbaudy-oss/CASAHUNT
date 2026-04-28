@@ -1,44 +1,71 @@
 # pi-scraper
 
-Cron-driven scraper that runs on `baudypi.local`. Fetches Idealista search results, writes new listings to Supabase, and pings Telegram.
+Cron-driven Idealista scraper. Runs on `baudypi.local`. Self-updates from GitHub on each run.
 
-## Local run
-
-```bash
-cp .env.example .env     # fill in creds
-npm install
-npm run dry-run          # scrape + log, no writes / notifications
-npm start                # real run
-```
-
-## Deploy to the Pi
+## One-time setup on the Pi
 
 ```bash
-# one-time
-ssh baudy@baudypi.local "mkdir -p ~/casahunt"
-rsync -av --delete --exclude node_modules --exclude .env ./ baudy@baudypi.local:~/casahunt/pi-scraper/
-ssh baudy@baudypi.local "cd ~/casahunt/pi-scraper && npm install --omit=dev"
-# copy .env up separately (don't rsync secrets)
-scp .env baudy@baudypi.local:~/casahunt/pi-scraper/.env
+ssh baudy@baudypi.local
+
+# 1. Clone
+cd ~
+git clone https://github.com/danielbaudy-oss/CASAHUNT.git casahunt
+
+# 2. Create env
+cd casahunt/pi-scraper
+cp .env.example .env
+nano .env   # fill in SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TELEGRAM_BOT_TOKEN
+
+# 3. First install
+npm install --omit=dev
+
+# 4. Make run script executable
+chmod +x run.sh
+
+# 5. Dry-run test
+DRY_RUN=1 ./run.sh
+
+# 6. Install cron (every 15 min, self-updates from GitHub)
+crontab crontab.txt
 ```
 
-## Cron
+From that point on, every push to `main` gets picked up automatically on the next cron run — no SSH needed to deploy.
 
-Edit with `crontab -e` on the Pi:
+## Manual commands (on the Pi)
 
-```
-*/15 * * * * cd /home/baudy/casahunt/pi-scraper && /usr/bin/node src/index.js >> /home/baudy/casahunt/pi-scraper/scraper.log 2>&1
+```bash
+# One scrape now (dry-run: no DB writes, no Telegram)
+cd ~/casahunt/pi-scraper && DRY_RUN=1 ./run.sh
+
+# Real run right now
+cd ~/casahunt/pi-scraper && ./run.sh
+
+# Watch the log
+tail -f ~/casahunt/pi-scraper/logs/run.log
+
+# Switch to headless Chromium if Idealista starts blocking plain fetch
+cd ~/casahunt/pi-scraper
+echo "USE_HEADLESS=1" >> .env
+npm install puppeteer    # ~300MB download of Chromium
 ```
 
 ## Structure
 
 ```
 src/
-  index.js        entry point: for each enabled filter, scrape → dedupe → notify
-  config.js       env loading + validation
-  supabase.js     service-role client
-  telegram.js     sendMessage / sendPhoto
+  index.js                 orchestrator: reads filters, scrapes, notifies
+  config.js                env loading
+  supabase.js              service-role client
+  telegram.js              sendMessage / sendPhoto
+  neighborhoods.js         mirror of frontend/neighborhoods.js
+  dedupe.js                canonical-key fingerprints
+  idealista/
+    locations.js           casahunt slug → Idealista URL path mapping
+    urlBuilder.js          filter → search URLs
+    fetcher.js             plain HTTP + headless fallback
+    parser.js              Cheerio parser with self-diagnostic mode
   scrape/
-    idealista.js  fetch + parse Idealista search results
-    headless.js   Puppeteer fallback for anti-bot sites (stub for now)
+    headless.js            Puppeteer helper (loaded only when USE_HEADLESS=1)
+run.sh                     cron wrapper: git pull → npm install → node src/index.js
+crontab.txt                `*/15 * * * *` schedule
 ```
