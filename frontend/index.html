@@ -54,6 +54,16 @@
               <input name="name" type="text" required />
             </label>
 
+            <div class="full loc-search">
+              <label><span>Where are you looking?</span></label>
+              <div class="loc-input-wrap" id="loc-wrap">
+                <div id="loc-chips" class="loc-chips-inline"></div>
+                <input id="loc-input" type="text" placeholder="Type a district or neighborhood…" autocomplete="off" />
+              </div>
+              <div id="loc-dropdown" class="loc-dropdown" hidden></div>
+              <p class="msg" style="margin-top:.35rem;">Empty = whole city. Adding a district selects all its neighborhoods.</p>
+            </div>
+
             <label>
               <span>City</span>
               <input name="city" type="text" value="barcelona" />
@@ -76,16 +86,6 @@
             <label><span>Rooms max</span><input name="rooms_max" type="number" min="0" /></label>
             <label><span>Size min (m²)</span><input name="size_min_m2" type="number" min="0" /></label>
             <label><span>Size max (m²)</span><input name="size_max_m2" type="number" min="0" /></label>
-
-            <div class="full nb-block">
-              <div class="nb-head">
-                <label class="nb-label"><span>Neighborhoods</span></label>
-                <input id="nb-filter" type="text" placeholder="Filter…" autocomplete="off" />
-                <span id="nb-count" class="msg"></span>
-              </div>
-              <div id="nb-tree" class="nb-tree"></div>
-              <p class="msg">Leave empty to match the whole city.</p>
-            </div>
           </div>
         </div>
 
