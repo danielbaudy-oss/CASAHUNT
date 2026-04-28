@@ -10,12 +10,18 @@ async function getBrowser() {
   if (!browserPromise) {
     browserPromise = (async () => {
       const puppeteer = await import("puppeteer");
+      // Use a system-installed Chromium on ARM Pis; puppeteer's bundled Chrome
+      // is x86_64-only. Set PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium in .env
+      // (default on Raspberry Pi OS).
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
       return puppeteer.launch({
         headless: "new",
+        executablePath,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
+          "--disable-gpu",
         ],
       });
     })();
