@@ -8,11 +8,8 @@ const filtersSection = $("#filters");
 const authMsg = $("#auth-msg");
 
 function getSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); }
+  catch { return null; }
 }
 function setSession(s) {
   if (!s) localStorage.removeItem(SESSION_KEY);
@@ -24,15 +21,11 @@ function show(view) {
   filtersSection.hidden = view !== "filters";
 }
 
-function api(path) {
-  return `${config.supabaseUrl}/functions/v1/${path}`;
-}
-function rest(path) {
-  return `${config.supabaseUrl}/rest/v1/${path}`;
-}
+const fnUrl  = (name) => `${config.supabaseUrl}/functions/v1/${name}`;
+const restUrl = (path) => `${config.supabaseUrl}/rest/v1/${path}`;
 
 async function callFn(name, body) {
-  const res = await fetch(api(name), {
+  const res = await fetch(fnUrl(name), {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -47,7 +40,7 @@ async function callFn(name, body) {
 }
 
 async function callRest(path, { method = "GET", body, session } = {}) {
-  const res = await fetch(rest(path), {
+  const res = await fetch(restUrl(path), {
     method,
     headers: {
       "content-type": "application/json",
@@ -60,6 +53,7 @@ async function callRest(path, { method = "GET", body, session } = {}) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
   return data;
@@ -68,8 +62,7 @@ async function callRest(path, { method = "GET", body, session } = {}) {
 // ── Auth flow ────────────────────────────────────────────────────────────────
 
 $("#send-code").addEventListener("click", async () => {
-  authMsg.className = "msg";
-  authMsg.textContent = "";
+  authMsg.className = "msg"; authMsg.textContent = "";
   try {
     const chat_id = Number($("#chat-id").value);
     if (!chat_id) throw new Error("chat id required");
@@ -82,8 +75,7 @@ $("#send-code").addEventListener("click", async () => {
 });
 
 $("#verify-code").addEventListener("click", async () => {
-  authMsg.className = "msg";
-  authMsg.textContent = "";
+  authMsg.className = "msg"; authMsg.textContent = "";
   try {
     const chat_id = Number($("#chat-id").value);
     const code = $("#code").value.trim();
@@ -104,31 +96,158 @@ $("#sign-out").addEventListener("click", () => {
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 
+const FIELDS = [
+  { key: "name",          label: "Name",          type: "text"   },
+  { key: "city",           label: "City",          type: "text"   },
+  { key: "source",         label: "Source",        type: "select", options: ["idealista", "fotocasa"] },
+  { key: "price_min",      label: "Min €",         type: "number" },
+  { key: "price_max",      label: "Max €",         type: "number" },
+  { key: "rooms_min",      label: "Min rooms",     type: "number" },
+  { key: "rooms_max",      label: "Max rooms",     type: "number" },
+  { key: "size_min_m2",    label: "Min m²",        type: "number" },
+  { key: "size_max_m2",    label: "Max m²",        type: "number" },
+  { key: "neighborhoods",  label: "Neighborhoods", type: "csv"    },
+  { key: "enabled",        label: "Enabled",       type: "bool"   },
+];
+
+function renderFilterCard(f) {
+  const el = document.createElement("div");
+  el.className = "filter";
+  el.dataset.id = f.id;
+
+  const title = document.createElement("div");
+  title.className = "filter-title";
+  title.textContent = `${f.name} · ${f.city} · ${f.source}`;
+  el.appendChild(title);
+
+  const grid = document.createElement("div");
+  grid.className = "filter-grid";
+  for (const fld of FIELDS) {
+    const wrap = document.createElement("label");
+    wrap.textContent = fld.label;
+
+    let input;
+    if (fld.type === "select") {
+      input = document.createElement("select");
+      for (const opt of fld.options) {
+        const o = document.createElement("option");
+        o.value = opt; o.textContent = opt;
+        if (f[fld.key] === opt) o.selected = true;
+        input.appendChild(o);
+      }
+    } else if (fld.type === "bool") {
+      input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = !!f[fld.key];
+    } else {
+      input = document.createElement("input");
+      input.type = fld.type === "number" ? "number" : "text";
+      if (fld.type === "csv") {
+        input.value = (f.neighborhoods || []).join(", ");
+      } else {
+        input.value = f[fld.key] ?? "";
+      }
+    }
+    input.dataset.key = fld.key;
+    input.dataset.type = fld.type;
+    wrap.appendChild(input);
+    grid.appendChild(wrap);
+  }
+  el.appendChild(grid);
+
+  const actions = document.createElement("div");
+  actions.className = "filter-actions";
+
+  const save = document.createElement("button");
+  save.textContent = "Save";
+  save.addEventListener("click", () => saveFilter(f.id, el));
+  actions.appendChild(save);
+
+  const del = document.createElement("button");
+  del.textContent = "Delete";
+  del.className = "danger";
+  del.addEventListener("click", () => deleteFilter(f.id));
+  actions.appendChild(del);
+
+  const status = document.createElement("span");
+  status.className = "msg";
+  status.dataset.role = "status";
+  actions.appendChild(status);
+
+  el.appendChild(actions);
+  return el;
+}
+
+function readCard(el) {
+  const patch = {};
+  el.querySelectorAll("[data-key]").forEach((inp) => {
+    const key = inp.dataset.key;
+    const type = inp.dataset.type;
+    if (type === "bool") patch[key] = inp.checked;
+    else if (type === "number") patch[key] = inp.value === "" ? null : Number(inp.value);
+    else if (type === "csv") {
+      patch[key] = inp.value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    } else {
+      patch[key] = inp.value === "" ? null : inp.value;
+    }
+  });
+  return patch;
+}
+
+function setStatus(el, text, kind = "") {
+  const s = el.querySelector('[data-role="status"]');
+  s.className = "msg" + (kind ? " " + kind : "");
+  s.textContent = text;
+  if (text) setTimeout(() => { if (s.textContent === text) s.textContent = ""; }, 2500);
+}
+
+async function saveFilter(id, el) {
+  const session = getSession();
+  const patch = readCard(el);
+  setStatus(el, "Saving…");
+  try {
+    await callRest(`filters?id=eq.${id}`, { method: "PATCH", body: patch, session });
+    setStatus(el, "Saved ✓", "ok");
+  } catch (e) {
+    setStatus(el, e.message, "error");
+  }
+}
+
+async function deleteFilter(id) {
+  if (!confirm("Delete this filter?")) return;
+  const session = getSession();
+  try {
+    await callRest(`filters?id=eq.${id}`, { method: "DELETE", session });
+    await renderFilters();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
 async function renderFilters() {
   const session = getSession();
   const list = $("#filters-list");
-  list.innerHTML = "Loading…";
+  list.textContent = "Loading…";
   try {
     const rows = await callRest("filters?select=*&order=id", { session });
+    list.innerHTML = "";
     if (!rows.length) {
-      list.innerHTML = "<p class='msg'>No filters yet.</p>";
+      const p = document.createElement("p");
+      p.className = "msg";
+      p.textContent = "No filters yet. Click Add filter to create one.";
+      list.appendChild(p);
       return;
     }
-    list.innerHTML = rows
-      .map(
-        (f) => `
-      <div class="filter">
-        <strong>${f.name}</strong> · ${f.city} · ${f.source}
-        <div class="msg">
-          ${f.price_min ?? "—"}–${f.price_max ?? "—"} € ·
-          ${f.rooms_min ?? "—"}+ hab ·
-          ≤${f.size_max_m2 ?? "—"} m²
-        </div>
-      </div>`,
-      )
-      .join("");
+    rows.forEach((f) => list.appendChild(renderFilterCard(f)));
   } catch (e) {
-    list.innerHTML = `<p class='msg error'>${e.message}</p>`;
+    list.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "msg error";
+    p.textContent = e.message;
+    list.appendChild(p);
   }
 }
 
@@ -138,11 +257,9 @@ $("#add-filter").addEventListener("click", async () => {
     await callRest("filters", {
       method: "POST",
       body: {
-        name: "default",
+        name: "new filter",
         city: "barcelona",
         source: "idealista",
-        price_max: 1500,
-        rooms_min: 2,
       },
       session,
     });

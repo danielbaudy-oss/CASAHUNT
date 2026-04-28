@@ -44,5 +44,47 @@ button {
   margin-top: .5rem;
 }
 button.secondary { background: transparent; border: 1px solid var(--border); color: var(--fg); }
+button.danger { background: #b00020; }
 .msg { color: var(--muted); font-size: .9rem; }
 .msg.error { color: #ff6b6b; }
+.msg.ok { color: #4ade80; }
+
+.filter {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .75rem;
+  margin-bottom: .75rem;
+  background: #14171d;
+}
+.filter-title {
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .5rem .75rem;
+  margin-bottom: .5rem;
+}
+.filter-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  color: var(--muted);
+  font-size: .8rem;
+  margin: 0;
+}
+.filter-grid input, .filter-grid select {
+  padding: .35rem .5rem;
+  font-size: .9rem;
+}
+.filter-grid input[type="checkbox"] {
+  width: auto;
+  align-self: flex-start;
+}
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.filter-actions .msg { margin-left: auto; }
