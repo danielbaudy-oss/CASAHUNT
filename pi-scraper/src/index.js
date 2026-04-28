@@ -85,7 +85,7 @@ async function runFilter(filter) {
 
   if (!unique.length) return;
 
-  const newOnes = await upsertAndFindNew(unique);
+  const newOnes = await upsertAndFindNew(unique, config.dryRun);
   log("new listings", { id: filter.id, n: newOnes.length });
 
   if (config.dryRun) {
@@ -102,17 +102,17 @@ async function runFilter(filter) {
   }
 }
 
-async function upsertAndFindNew(listings) {
-  const pairs = listings.map((l) => ({ source: l.source, external_id: l.external_id }));
-
+async function upsertAndFindNew(listings, dryRun = false) {
   // Fetch what we already know.
   const { data: existing, error: exErr } = await db
     .from("listings_seen")
     .select("source, external_id")
-    .in("external_id", pairs.map((p) => p.external_id));
+    .in("external_id", listings.map((l) => l.external_id));
   if (exErr) throw exErr;
   const known = new Set((existing || []).map((r) => `${r.source}|${r.external_id}`));
   const newOnes = listings.filter((l) => !known.has(`${l.source}|${l.external_id}`));
+
+  if (dryRun) return newOnes;
 
   // Project to the columns listings_seen actually has; stash the rest in `raw`.
   const now = new Date().toISOString();
