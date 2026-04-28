@@ -40,7 +40,6 @@
       </section>
     </main>
 
-    <!-- Edit dialog (native <dialog>) -->
     <dialog id="edit-dialog">
       <form id="edit-form" method="dialog">
         <header class="dlg-head">
@@ -48,49 +47,50 @@
           <button type="button" class="icon-btn" data-act="close" aria-label="Close">×</button>
         </header>
 
-        <div class="dlg-grid">
-          <label class="full">
-            Name
-            <input name="name" type="text" required />
-          </label>
+        <div class="dlg-body">
+          <div class="dlg-grid">
+            <label class="full">
+              <span>Name</span>
+              <input name="name" type="text" required />
+            </label>
 
-          <label>
-            City
-            <input name="city" type="text" value="barcelona" />
-          </label>
+            <label>
+              <span>City</span>
+              <input name="city" type="text" value="barcelona" />
+            </label>
 
-          <label>
-            Enabled
-            <input name="enabled" type="checkbox" />
-          </label>
+            <label class="switch-row">
+              <span>Enabled</span>
+              <input name="enabled" type="checkbox" />
+            </label>
 
-          <fieldset class="full">
-            <legend>Sources</legend>
-            <label class="inline"><input type="checkbox" name="sources" value="idealista" /> Idealista</label>
-            <label class="inline"><input type="checkbox" name="sources" value="fotocasa" /> Fotocasa</label>
-          </fieldset>
+            <fieldset class="full">
+              <legend>Sources</legend>
+              <label class="chip-toggle"><input type="checkbox" name="sources" value="idealista" /><span>Idealista</span></label>
+              <label class="chip-toggle"><input type="checkbox" name="sources" value="fotocasa" /><span>Fotocasa</span></label>
+            </fieldset>
 
-          <label>Price min (€) <input name="price_min" type="number" min="0" /></label>
-          <label>Price max (€) <input name="price_max" type="number" min="0" /></label>
-          <label>Rooms min <input name="rooms_min" type="number" min="0" /></label>
-          <label>Rooms max <input name="rooms_max" type="number" min="0" /></label>
-          <label>Size min (m²) <input name="size_min_m2" type="number" min="0" /></label>
-          <label>Size max (m²) <input name="size_max_m2" type="number" min="0" /></label>
+            <label><span>Price min (€)</span><input name="price_min" type="number" min="0" /></label>
+            <label><span>Price max (€)</span><input name="price_max" type="number" min="0" /></label>
+            <label><span>Rooms min</span><input name="rooms_min" type="number" min="0" /></label>
+            <label><span>Rooms max</span><input name="rooms_max" type="number" min="0" /></label>
+            <label><span>Size min (m²)</span><input name="size_min_m2" type="number" min="0" /></label>
+            <label><span>Size max (m²)</span><input name="size_max_m2" type="number" min="0" /></label>
 
-          <div class="full">
-            <label>Neighborhoods</label>
-            <div id="nb-picker" class="nb-picker">
-              <div id="nb-chips" class="nb-chips"></div>
-              <input id="nb-search" type="text" placeholder="Type to search…" autocomplete="off" />
-              <ul id="nb-results" class="nb-results" hidden></ul>
+            <div class="full nb-block">
+              <div class="nb-head">
+                <label class="nb-label"><span>Neighborhoods</span></label>
+                <input id="nb-filter" type="text" placeholder="Filter…" autocomplete="off" />
+                <span id="nb-count" class="msg"></span>
+              </div>
+              <div id="nb-tree" class="nb-tree"></div>
+              <p class="msg">Leave empty to match the whole city.</p>
             </div>
-            <p class="msg">Leave empty to match the whole city.</p>
           </div>
         </div>
 
-        <p id="dlg-msg" class="msg"></p>
-
         <footer class="dlg-foot">
+          <p id="dlg-msg" class="msg"></p>
           <button type="button" data-act="close" class="secondary">Cancel</button>
           <button type="submit" data-act="save">Save</button>
         </footer>

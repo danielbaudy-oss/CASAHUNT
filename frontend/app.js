@@ -93,35 +93,45 @@ $("#verify-code").addEventListener("click", async () => {
 
 $("#sign-out").addEventListener("click", () => { setSession(null); show("auth"); });
 
-// ── Filter list rendering ───────────────────────────────────────────────────
+// ── Formatters ──────────────────────────────────────────────────────────────
 
 function fmtPriceRange(f) {
   if (f.price_min && f.price_max) return `€${f.price_min}–${f.price_max}`;
   if (f.price_max) return `≤ €${f.price_max}`;
   if (f.price_min) return `≥ €${f.price_min}`;
-  return "€ any";
+  return null;
 }
 function fmtRoomsRange(f) {
   if (f.rooms_min && f.rooms_max) return `${f.rooms_min}–${f.rooms_max} hab`;
   if (f.rooms_min) return `${f.rooms_min}+ hab`;
   if (f.rooms_max) return `≤${f.rooms_max} hab`;
-  return "any rooms";
+  return null;
 }
 function fmtSizeRange(f) {
   if (f.size_min_m2 && f.size_max_m2) return `${f.size_min_m2}–${f.size_max_m2} m²`;
   if (f.size_max_m2) return `≤${f.size_max_m2} m²`;
   if (f.size_min_m2) return `≥${f.size_min_m2} m²`;
-  return "any size";
+  return null;
 }
-function fmtNbCount(f) {
-  const n = (f.neighborhoods || []).length;
-  return n ? `${n} neighborhood${n === 1 ? "" : "s"}` : "all neighborhoods";
+function fmtNbList(f, max = 4) {
+  const slugs = f.neighborhoods || [];
+  if (!slugs.length) return "all neighborhoods";
+  const names = slugs
+    .map((s) => NEIGHBORHOODS_BCN.find((n) => n.slug === s)?.name)
+    .filter(Boolean);
+  if (!names.length) return "all neighborhoods";
+  if (names.length <= max) return names.join(", ");
+  return `${names.slice(0, max).join(", ")} +${names.length - max} more`;
 }
-function fmtSources(f) {
-  const s = f.sources || [];
-  if (!s.length) return "no sources";
-  return s.join(" + ");
+
+function pill(text, { muted = false } = {}) {
+  const span = document.createElement("span");
+  span.className = "pill" + (muted ? " muted" : "");
+  span.textContent = text;
+  return span;
 }
+
+// ── Filter list rendering ───────────────────────────────────────────────────
 
 function renderFilterRow(f) {
   const row = document.createElement("div");
@@ -138,15 +148,17 @@ function renderFilterRow(f) {
 
   const summary = document.createElement("div");
   summary.className = "filter-summary";
-  summary.textContent = [
-    f.city,
-    fmtSources(f),
-    fmtPriceRange(f),
-    fmtRoomsRange(f),
-    fmtSizeRange(f),
-    fmtNbCount(f),
-    f.enabled ? null : "disabled",
-  ].filter(Boolean).join(" · ");
+
+  const parts = [];
+  parts.push({ text: f.city, muted: true });
+  parts.push({ text: (f.sources || []).join(" + "), muted: false });
+  [fmtPriceRange(f), fmtRoomsRange(f), fmtSizeRange(f)]
+    .filter(Boolean)
+    .forEach((t) => parts.push({ text: t, muted: false }));
+  parts.push({ text: fmtNbList(f), muted: true });
+  if (!f.enabled) parts.push({ text: "disabled", muted: true });
+
+  parts.forEach((p) => summary.appendChild(pill(p.text, { muted: p.muted })));
   main.appendChild(summary);
 
   row.appendChild(main);
@@ -224,10 +236,10 @@ async function deleteFilter(id) {
 
 // ── Edit dialog ─────────────────────────────────────────────────────────────
 
-const dlg       = $("#edit-dialog");
-const dlgForm   = $("#edit-form");
-const dlgTitle  = $("#dlg-title");
-const dlgMsg    = $("#dlg-msg");
+const dlg      = $("#edit-dialog");
+const dlgForm  = $("#edit-form");
+const dlgTitle = $("#dlg-title");
+const dlgMsg   = $("#dlg-msg");
 
 let editingId = null;
 let selectedNeighborhoods = new Set();
@@ -253,16 +265,16 @@ function openEditDialog(f) {
   });
 
   selectedNeighborhoods = new Set(normalizeNeighborhoodSlugs(f.neighborhoods));
-  renderChips();
-  $("#nb-search").value = "";
-  renderNbResults("");
+  renderNbTree();
+  $("#nb-filter").value = "";
+  applyNbFilter("");
+  updateNbCount();
 
   dlg.showModal();
 }
 
 dlg.addEventListener("click", (e) => {
-  const act = e.target.dataset?.act;
-  if (act === "close") { dlg.close(); }
+  if (e.target.dataset?.act === "close") dlg.close();
 });
 
 dlgForm.addEventListener("submit", async (e) => {
@@ -271,16 +283,16 @@ dlgForm.addEventListener("submit", async (e) => {
 
   const fd = new FormData(dlgForm);
   const patch = {
-    name:        (fd.get("name") || "").toString().trim() || "untitled",
-    city:        (fd.get("city") || "barcelona").toString().trim(),
-    enabled:     !!fd.get("enabled"),
-    price_min:   numOrNull(fd.get("price_min")),
-    price_max:   numOrNull(fd.get("price_max")),
-    rooms_min:   numOrNull(fd.get("rooms_min")),
-    rooms_max:   numOrNull(fd.get("rooms_max")),
-    size_min_m2: numOrNull(fd.get("size_min_m2")),
-    size_max_m2: numOrNull(fd.get("size_max_m2")),
-    sources:     fd.getAll("sources"),
+    name:          (fd.get("name") || "").toString().trim() || "untitled",
+    city:          (fd.get("city") || "barcelona").toString().trim(),
+    enabled:       !!fd.get("enabled"),
+    price_min:     numOrNull(fd.get("price_min")),
+    price_max:     numOrNull(fd.get("price_max")),
+    rooms_min:     numOrNull(fd.get("rooms_min")),
+    rooms_max:     numOrNull(fd.get("rooms_max")),
+    size_min_m2:   numOrNull(fd.get("size_min_m2")),
+    size_max_m2:   numOrNull(fd.get("size_max_m2")),
+    sources:       fd.getAll("sources"),
     neighborhoods: [...selectedNeighborhoods],
   };
 
@@ -308,69 +320,106 @@ function numOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-// ── Neighborhood picker ─────────────────────────────────────────────────────
+// ── Neighborhood picker (unfolded tree, grouped by district) ───────────────
 
-const nbSearch  = $("#nb-search");
-const nbResults = $("#nb-results");
-const nbChips   = $("#nb-chips");
+const CHEVRON = `<svg class="nb-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-function renderChips() {
-  nbChips.innerHTML = "";
-  if (!selectedNeighborhoods.size) {
-    const span = document.createElement("span");
-    span.className = "msg";
-    span.textContent = "(none — whole city)";
-    nbChips.appendChild(span);
-    return;
+function groupedByDistrict() {
+  const map = new Map();
+  for (const n of NEIGHBORHOODS_BCN) {
+    if (!map.has(n.district)) map.set(n.district, []);
+    map.get(n.district).push(n);
   }
-  for (const slug of selectedNeighborhoods) {
-    const n = NEIGHBORHOODS_BCN.find((x) => x.slug === slug);
-    if (!n) continue;
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    chip.innerHTML = `<span>${n.name}</span><button type="button" aria-label="Remove">×</button>`;
-    chip.querySelector("button").addEventListener("click", () => {
-      selectedNeighborhoods.delete(slug);
-      renderChips();
-      renderNbResults(nbSearch.value);
+  return map;
+}
+
+function renderNbTree() {
+  const tree = $("#nb-tree");
+  tree.innerHTML = "";
+  const grouped = groupedByDistrict();
+
+  for (const [district, items] of grouped) {
+    const box = document.createElement("div");
+    box.className = "nb-district";
+    box.dataset.district = district;
+
+    const head = document.createElement("div");
+    head.className = "nb-district-head";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "nb-district-name";
+    nameEl.innerHTML = `${CHEVRON}${district}`;
+
+    const meta = document.createElement("span");
+    meta.className = "nb-district-meta";
+    meta.dataset.role = "district-meta";
+
+    head.appendChild(nameEl);
+    head.appendChild(meta);
+    head.addEventListener("click", () => box.classList.toggle("collapsed"));
+    box.appendChild(head);
+
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "nb-district-items";
+    items.forEach((n) => {
+      const lbl = document.createElement("label");
+      lbl.className = "nb-item";
+      lbl.dataset.slug = n.slug;
+      lbl.dataset.search = (n.name + " " + n.district).toLowerCase();
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = selectedNeighborhoods.has(n.slug);
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedNeighborhoods.add(n.slug);
+        else selectedNeighborhoods.delete(n.slug);
+        updateNbCount();
+        updateDistrictMeta(box, items);
+      });
+
+      const txt = document.createElement("span");
+      txt.textContent = n.name;
+
+      lbl.appendChild(cb);
+      lbl.appendChild(txt);
+      itemsWrap.appendChild(lbl);
     });
-    nbChips.appendChild(chip);
+    box.appendChild(itemsWrap);
+
+    tree.appendChild(box);
+    updateDistrictMeta(box, items);
   }
 }
 
-function renderNbResults(query) {
-  const q = query.trim().toLowerCase();
-  const matches = NEIGHBORHOODS_BCN
-    .filter((n) => {
-      if (selectedNeighborhoods.has(n.slug)) return false;
-      if (!q) return true;
-      return n.name.toLowerCase().includes(q) || n.district.toLowerCase().includes(q);
-    })
-    .slice(0, 12);
-
-  nbResults.innerHTML = "";
-  if (!matches.length) { nbResults.hidden = true; return; }
-  for (const n of matches) {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${n.name}</strong><span class="msg">${n.district}</span>`;
-    li.addEventListener("click", () => {
-      selectedNeighborhoods.add(n.slug);
-      renderChips();
-      nbSearch.value = "";
-      renderNbResults("");
-      nbSearch.focus();
-    });
-    nbResults.appendChild(li);
-  }
-  nbResults.hidden = false;
+function updateDistrictMeta(box, items) {
+  const total = items.length;
+  const selected = items.filter((n) => selectedNeighborhoods.has(n.slug)).length;
+  const meta = box.querySelector('[data-role="district-meta"]');
+  meta.textContent = selected ? `${selected}/${total}` : `${total}`;
 }
 
-nbSearch.addEventListener("focus", () => renderNbResults(nbSearch.value));
-nbSearch.addEventListener("input", () => renderNbResults(nbSearch.value));
-nbSearch.addEventListener("blur", () => {
-  // Delay so click on a result still fires first.
-  setTimeout(() => { nbResults.hidden = true; }, 150);
-});
+function updateNbCount() {
+  const el = $("#nb-count");
+  const n = selectedNeighborhoods.size;
+  el.textContent = n ? `${n} selected` : "whole city";
+}
+
+function applyNbFilter(q) {
+  const needle = q.trim().toLowerCase();
+  document.querySelectorAll(".nb-district").forEach((box) => {
+    let visibleCount = 0;
+    box.querySelectorAll(".nb-item").forEach((item) => {
+      const match = !needle || item.dataset.search.includes(needle);
+      item.classList.toggle("hidden", !match);
+      if (match) visibleCount++;
+    });
+    box.classList.toggle("empty", visibleCount === 0);
+    // When filtering, auto-expand matches; when cleared, leave state as-is.
+    if (needle && visibleCount > 0) box.classList.remove("collapsed");
+  });
+}
+
+$("#nb-filter").addEventListener("input", (e) => applyNbFilter(e.target.value));
 
 // ── Boot ────────────────────────────────────────────────────────────────────
 
