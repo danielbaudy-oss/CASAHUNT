@@ -179,6 +179,11 @@ function escapeHtml(s) {
   return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
-function log(...args) { console.log(new Date().toISOString(), ...args); }
+function log(...args) {
+  const formatted = args.map((a) =>
+    typeof a === "object" && a !== null ? JSON.stringify(a) : a
+  );
+  console.log(new Date().toISOString(), ...formatted);
+}
 
 main().catch((e) => { console.error("run failed:", e); process.exit(1); });
