@@ -1,0 +1,21 @@
+HTTP/1.1 406 Not Acceptable
+Date: Tue, 28 Apr 2026 13:08:57 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+CF-Ray: 9f364c72dc4c90e8-BCN
+CF-Cache-Status: DYNAMIC
+set-cookie: __cf_bm=t1e0dA3EtxmdFDHsOjh.SV.CWWRflF72AqTZ4Fcfs.o-1777381737.4119046-1.0.1.1-blsGONoBtSsjABrVSniLwGkPeIBOO1_SGCoiK79a49913NYwNlPFMWSjtMcQHwtqPmuG.BPA0gweJWL1vy1kzrJ.Yeve6Ojd6.rMslAUlGAjGj0Uv4GdKARpv9X4w_wm; HttpOnly; Secure; Path=/; Domain=supabase.co; Expires=Tue, 28 Apr 2026 13:38:57 GMT
+Server: cloudflare
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+proxy-status: PostgREST; error=PGRST106
+sb-gateway-version: 1
+sb-project-ref: kxbmlsbxnzvgzucxleoy
+sb-request-id: 019dd435-03c7-75ab-978a-24c680a734dc
+x-envoy-attempt-count: 1
+x-envoy-upstream-service-time: 0
+alt-svc: h3=":443"; ma=86400
+
+{"code":"PGRST106","details":null,"hint":"Only the following schemas are exposed: public, dropping","message":"Invalid schema: casahunt"}

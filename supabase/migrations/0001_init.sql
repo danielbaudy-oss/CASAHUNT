@@ -54,7 +54,7 @@ create index if not exists sessions_chat_id_idx on casahunt.sessions(chat_id);
 
 create table if not exists casahunt.filters (
   id             bigserial primary key,
-  chat_id        bigint not null references casahunt.users(chat_id) on delete cascade,
+  chat_id        bigint not null default casahunt.current_chat_id() references casahunt.users(chat_id) on delete cascade,
   name           text   not null default 'default',
   city           text   not null default 'barcelona',
   source         text   not null default 'idealista',    -- idealista | fotocasa
