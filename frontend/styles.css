@@ -48,7 +48,7 @@ h1 {
   margin: 0 0 .15rem;
   font-size: 1.85rem;
   font-weight: 800;
-  color: var(--pink);
+  color: var(--green-darker);
   letter-spacing: -0.02em;
 }
 .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
@@ -102,8 +102,8 @@ button.secondary {
   font-weight: 500;
 }
 button.secondary:hover { background: var(--bg-soft); }
-button.danger { background: var(--danger); }
-button.danger:hover { background: #b32439; }
+button.danger { background: var(--pink); }
+button.danger:hover { background: var(--pink-dark); }
 button.icon-btn {
   background: transparent;
   color: var(--muted);
@@ -111,7 +111,14 @@ button.icon-btn {
   line-height: 1;
   padding: .15rem .5rem;
 }
-button.icon-btn:hover { background: var(--bg-soft); color: var(--fg); }
+/* Green action button (Edit) — dark text since green is pale */
+button.green {
+  background: var(--green);
+  color: var(--fg);
+  border: 1px solid var(--green-darker);
+  font-weight: 600;
+}
+button.green:hover { background: var(--green-dark); }
 
 .msg { color: var(--muted); font-size: .85rem; margin: 0; }
 .msg.error { color: var(--danger); }

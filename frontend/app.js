@@ -210,7 +210,7 @@ function renderFilterRow(f) {
 
   const edit = document.createElement("button");
   edit.textContent = "Edit";
-  edit.className = "secondary";
+  edit.className = "green";
   edit.addEventListener("click", () => openEditDialog(f));
   actions.appendChild(edit);
 
