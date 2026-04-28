@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>casahunt</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <header>
+        <h1>casahunt</h1>
+        <p class="sub">Real estate alerts for Barcelona</p>
+      </header>
+
+      <section id="auth" hidden>
+        <h2>Sign in</h2>
+        <label>
+          Telegram chat id
+          <input id="chat-id" type="number" inputmode="numeric" />
+        </label>
+        <button id="send-code">Send code</button>
+
+        <label>
+          Code from Telegram
+          <input id="code" type="text" inputmode="numeric" maxlength="6" />
+        </label>
+        <button id="verify-code">Verify</button>
+        <p id="auth-msg" class="msg"></p>
+      </section>
+
+      <section id="filters" hidden>
+        <h2>Your filters</h2>
+        <div id="filters-list"></div>
+        <button id="add-filter">Add filter</button>
+        <button id="sign-out" class="secondary">Sign out</button>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
