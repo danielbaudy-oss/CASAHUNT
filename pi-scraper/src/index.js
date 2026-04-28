@@ -19,6 +19,14 @@ import { parseSearchResults } from "./idealista/parser.js";
 import { canonicalKey } from "./dedupe.js";
 import { sendPhoto, sendMessage } from "./telegram.js";
 
+function fmtErr(e) {
+  if (e instanceof Error) return `${e.name}: ${e.message}`;
+  if (e && typeof e === "object") {
+    try { return JSON.stringify(e); } catch {}
+  }
+  return String(e);
+}
+
 async function main() {
   const startedAt = Date.now();
   log("run start", { dryRun: config.dryRun, useHeadless: config.useHeadless });
@@ -34,7 +42,7 @@ async function main() {
     try {
       await runFilter(filter);
     } catch (e) {
-      log("filter failed", { id: filter.id, name: filter.name, err: String(e) });
+      log("filter failed", { id: filter.id, name: filter.name, err: fmtErr(e) });
     }
   }
 
@@ -106,8 +114,26 @@ async function upsertAndFindNew(listings) {
   const known = new Set((existing || []).map((r) => `${r.source}|${r.external_id}`));
   const newOnes = listings.filter((l) => !known.has(`${l.source}|${l.external_id}`));
 
+  // Project to the columns listings_seen actually has; stash the rest in `raw`.
   const now = new Date().toISOString();
-  const rows = listings.map((l) => ({ ...l, last_seen_at: now, raw: l }));
+  const rows = listings.map((l) => ({
+    source:        l.source,
+    external_id:   l.external_id,
+    url:           l.url,
+    title:         l.title,
+    price_eur:     l.price_eur,
+    size_m2:       l.size_m2,
+    rooms:         l.rooms,
+    neighborhood:  l.neighborhood,
+    city:          l.city,
+    photo_url:     l.photo_url,
+    lat:           l.lat ?? null,
+    lng:           l.lng ?? null,
+    address:       l.address ?? null,
+    canonical_key: l.canonical_key,
+    last_seen_at:  now,
+    raw:           l,
+  }));
   const { error: upErr } = await db
     .from("listings_seen")
     .upsert(rows, { onConflict: "source,external_id" });
