@@ -16,6 +16,9 @@ import { NEIGHBORHOODS_BCN } from "./neighborhoods.js";
 import { buildSearchUrls } from "./idealista/urlBuilder.js";
 import { fetchIdealistaHtml } from "./idealista/fetcher.js";
 import { parseSearchResults } from "./idealista/parser.js";
+import { buildFotocasaUrls } from "./fotocasa/urlBuilder.js";
+import { fetchFotocasaHtml } from "./fotocasa/fetcher.js";
+import { parseFotocasaResults } from "./fotocasa/parser.js";
 import { canonicalKey } from "./dedupe.js";
 import { sendPhoto, sendMessage } from "./telegram.js";
 
@@ -44,6 +47,8 @@ async function main() {
     } catch (e) {
       log("filter failed", { id: filter.id, name: filter.name, err: fmtErr(e) });
     }
+    // Delay between filters to avoid triggering anti-bot on rapid sequential requests.
+    await sleep(3000 + Math.random() * 2000);
   }
 
   log("run done", { ms: Date.now() - startedAt });
@@ -51,30 +56,42 @@ async function main() {
 
 async function runFilter(filter) {
   const srcs = filter.sources || ["idealista"];
-  if (!srcs.includes("idealista")) {
-    log("skip filter (no idealista source)", { id: filter.id });
-    return;
+  const scraped = [];
+
+  // ── Idealista ──
+  if (srcs.includes("idealista")) {
+    const urls = buildSearchUrls(filter, NEIGHBORHOODS_BCN);
+    log("idealista urls", { id: filter.id, name: filter.name, n: urls.length });
+    for (const url of urls) {
+      try {
+        const html = await fetchIdealistaHtml(url);
+        const { items, diagnostics } = parseSearchResults(html, url);
+        if (!items.length) log("idealista: parse returned 0 items", { url, diagnostics });
+        else log("idealista: parsed", { url, n: items.length });
+        scraped.push(...items);
+      } catch (e) {
+        log("idealista: fetch/parse failed", { url, err: fmtErr(e) });
+      }
+      await sleep(2000 + Math.random() * 2000);
+    }
   }
 
-  const urls = buildSearchUrls(filter, NEIGHBORHOODS_BCN);
-  log("filter urls", { id: filter.id, name: filter.name, n: urls.length });
-
-  const scraped = [];
-  for (const url of urls) {
-    try {
-      const html = await fetchIdealistaHtml(url);
-      const { items, diagnostics } = parseSearchResults(html, url);
-      if (!items.length) {
-        log("parse returned 0 items", { url, diagnostics });
-      } else {
-        log("parsed", { url, n: items.length });
+  // ── Fotocasa ──
+  if (srcs.includes("fotocasa")) {
+    const urls = buildFotocasaUrls(filter, NEIGHBORHOODS_BCN);
+    log("fotocasa urls", { id: filter.id, name: filter.name, n: urls.length });
+    for (const url of urls) {
+      try {
+        const html = await fetchFotocasaHtml(url);
+        const { items, diagnostics } = parseFotocasaResults(html, url);
+        if (!items.length) log("fotocasa: parse returned 0 items", { url, diagnostics });
+        else log("fotocasa: parsed", { url, n: items.length });
+        scraped.push(...items);
+      } catch (e) {
+        log("fotocasa: fetch/parse failed", { url, err: fmtErr(e) });
       }
-      scraped.push(...items);
-    } catch (e) {
-      log("fetch/parse failed", { url, err: String(e) });
+      await sleep(2000 + Math.random() * 2000);
     }
-    // Politeness: small jitter between requests.
-    await sleep(800 + Math.random() * 800);
   }
 
   // Dedupe by (source, external_id) inside this filter's scrape (a listing can
