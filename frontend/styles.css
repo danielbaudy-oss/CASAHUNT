@@ -43,21 +43,6 @@ body {
 
 main { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
-h1, h2, h3 { letter-spacing: -0.01em; color: var(--fg); }
-h1 {
-  margin: 0 0 .15rem;
-  font-size: 1.6rem;
-  font-weight: 400;
-  font-family: 'Press Start 2P', cursive;
-  color: #1a1a1a;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  transform: scaleY(1.35);
-  transform-origin: left bottom;
-  display: inline-block;
-}
-.sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
-
 section {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -413,6 +398,76 @@ fieldset legend {
 }
 .loc-result-type.district { background: var(--pink); color: white; }
 .loc-empty { padding: .65rem .55rem; color: var(--muted); font-size: .85rem; }
+
+/* ── App header ──────────────────────────────────────────────────────── */
+
+h1, h2, h3 { letter-spacing: -0.01em; color: var(--fg); }
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 400;
+  font-family: 'Press Start 2P', cursive;
+  color: #1a1a1a;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  transform: scaleY(1.35);
+  transform-origin: left bottom;
+  display: inline-block;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 2rem;
+}
+.app-header h1 { margin: 0; }
+.app-header .spacer { flex: 1; }
+.app-header .icon-btn { font-size: 1.4rem; color: var(--muted); }
+.app-header .icon-btn:hover { color: var(--fg); }
+
+.sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
+
+/* ── Settings ───────────────────────────────────────────────────────── */
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+.settings-head h2 { margin: 0; font-size: 1.15rem; }
+.settings-head .icon-btn { font-size: 1.2rem; }
+
+.settings-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: .75rem;
+  background: var(--card);
+}
+.settings-card h3 {
+  margin: 0 0 .5rem;
+  font-size: .95rem;
+}
+.settings-connected {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .6rem .75rem;
+  background: #ecfdf5;
+  border-radius: var(--radius-sm);
+  color: var(--ok);
+  font-size: .88rem;
+}
+.settings-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex-shrink: 0;
+}
 
 @media (max-width: 560px) {
   .dlg-grid { grid-template-columns: 1fr; }

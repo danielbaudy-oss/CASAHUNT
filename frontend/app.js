@@ -51,6 +51,8 @@ function setSession(s) {
 function show(view) {
   $("#auth").hidden = view !== "auth";
   $("#filters").hidden = view !== "filters";
+  $("#settings").hidden = view !== "settings";
+  $("#settings-btn").hidden = view === "auth";
 }
 
 const fnUrl   = (name) => `${config.supabaseUrl}/functions/v1/${name}`;
@@ -111,12 +113,46 @@ $("#verify-code").addEventListener("click", async () => {
     const code = $("#code").value.trim();
     const session = await callFn("casahunt-auth-verify-code", { chat_id, code });
     setSession(session);
+    localStorage.setItem("casahunt.chat_id", String(chat_id));
     await renderFilters();
     show("filters");
   } catch (e) { authMsg.className = "msg error"; authMsg.textContent = String(e.message || e); }
 });
 
 $("#sign-out").addEventListener("click", () => { setSession(null); show("auth"); });
+
+// ── Settings ────────────────────────────────────────────────────────────────
+
+$("#settings-btn").addEventListener("click", () => {
+  const session = getSession();
+  if (session) {
+    // Extract chat_id from the session — we stored it when we logged in.
+    const chatId = localStorage.getItem("casahunt.chat_id") || "—";
+    $("#settings-chat-id").textContent = chatId;
+    $("#settings-connected").hidden = false;
+    $("#settings-disconnected").hidden = true;
+  } else {
+    $("#settings-connected").hidden = true;
+    $("#settings-disconnected").hidden = false;
+  }
+  show("settings");
+});
+
+$("#settings-back").addEventListener("click", async () => {
+  const session = getSession();
+  if (session && new Date(session.expires_at) > new Date()) {
+    await renderFilters();
+    show("filters");
+  } else {
+    show("auth");
+  }
+});
+
+$("#settings-disconnect").addEventListener("click", () => {
+  setSession(null);
+  localStorage.removeItem("casahunt.chat_id");
+  show("auth");
+});
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 

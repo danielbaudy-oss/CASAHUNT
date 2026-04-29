@@ -11,13 +11,18 @@
   </head>
   <body>
     <main id="app">
-      <header>
+      <header class="app-header">
         <h1>cazapiso</h1>
-        <p class="sub">Real estate alerts for Barcelona</p>
+        <div class="spacer"></div>
+        <button id="settings-btn" class="icon-btn" hidden aria-label="Settings">⚙</button>
       </header>
 
+      <!-- Auth (sign in) -->
       <section id="auth" hidden>
         <h2>Sign in</h2>
+        <p class="msg" style="margin-bottom:1rem">
+          Open <a href="https://t.me/casahunter_alerts_bot" target="_blank" style="color:var(--pink)">@casahunter_alerts_bot</a> on Telegram and send any message, then enter your Chat ID below.
+        </p>
         <label>
           Telegram chat id
           <input id="chat-id" type="number" inputmode="numeric" />
@@ -32,17 +37,44 @@
         <p id="auth-msg" class="msg"></p>
       </section>
 
+      <!-- Filters (main view) -->
       <section id="filters" hidden>
         <div class="filters-head">
           <h2>Your filters</h2>
           <div class="spacer"></div>
           <button id="add-filter">+ New filter</button>
-          <button id="sign-out" class="secondary">Sign out</button>
         </div>
         <div id="filters-list"></div>
       </section>
+
+      <!-- Settings -->
+      <section id="settings" hidden>
+        <div class="settings-head">
+          <button id="settings-back" class="icon-btn" aria-label="Back">←</button>
+          <h2>Settings</h2>
+        </div>
+
+        <div class="settings-card">
+          <h3>Telegram</h3>
+          <div id="settings-connected" class="settings-connected" hidden>
+            <span class="settings-dot"></span>
+            Connected — Chat ID: <strong id="settings-chat-id"></strong>
+          </div>
+          <div id="settings-disconnected" hidden>
+            <p class="msg">Not connected.</p>
+          </div>
+          <button id="settings-disconnect" class="secondary" style="margin-top:.75rem">Sign out</button>
+        </div>
+
+        <div class="settings-card">
+          <h3>About</h3>
+          <p class="msg">cazapiso scrapes Idealista and Fotocasa every 15 minutes and sends you Telegram alerts for new listings matching your filters.</p>
+          <p class="msg" style="margin-top:.5rem"><a href="https://github.com/danielbaudy-oss/CAZAPISO" target="_blank" style="color:var(--pink)">GitHub</a></p>
+        </div>
+      </section>
     </main>
 
+    <!-- Edit filter dialog -->
     <dialog id="edit-dialog">
       <form id="edit-form" method="dialog">
         <header class="dlg-head">
