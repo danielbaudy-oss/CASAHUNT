@@ -180,7 +180,7 @@ function pill(text, { muted = false } = {}) {
 
 function renderFilterRow(f) {
   const row = document.createElement("div");
-  row.className = "filter-row" + (f.enabled ? "" : " disabled");
+  row.className = "filter-row";
   row.dataset.id = f.id;
 
   const main = document.createElement("div");
@@ -200,7 +200,6 @@ function renderFilterRow(f) {
     .filter(Boolean)
     .forEach((t) => summary.appendChild(pill(t, { muted: false })));
   summary.appendChild(pill(fmtLocations(f), { muted: true }));
-  if (!f.enabled) summary.appendChild(pill("disabled", { muted: true }));
 
   main.appendChild(summary);
   row.appendChild(main);
@@ -288,7 +287,6 @@ function openEditDialog(f) {
 
   dlgForm.elements.name.value         = f.name || "";
   dlgForm.elements.city.value         = f.city || "barcelona";
-  dlgForm.elements.enabled.checked    = !!f.enabled;
   dlgForm.elements.price_min.value    = f.price_min   ?? "";
   dlgForm.elements.price_max.value    = f.price_max   ?? "";
   dlgForm.elements.rooms_min.value    = f.rooms_min   ?? "";
@@ -317,7 +315,7 @@ dlgForm.addEventListener("submit", async (e) => {
   const patch = {
     name:          (fd.get("name") || "").toString().trim() || "untitled",
     city:          (fd.get("city") || "barcelona").toString().trim(),
-    enabled:       !!fd.get("enabled"),
+    enabled:       true,
     price_min:     numOrNull(fd.get("price_min")),
     price_max:     numOrNull(fd.get("price_max")),
     rooms_min:     numOrNull(fd.get("rooms_min")),

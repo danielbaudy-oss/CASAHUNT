@@ -47,9 +47,11 @@ h1, h2, h3 { letter-spacing: -0.01em; color: var(--fg); }
 h1 {
   margin: 0 0 .15rem;
   font-size: 1.85rem;
-  font-weight: 800;
-  color: var(--green-darker);
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  color: #1a1a1a;
   letter-spacing: -0.02em;
+  text-transform: lowercase;
 }
 .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
 
@@ -152,7 +154,6 @@ button.green:hover { background: var(--green-dark); }
   border-color: #d6dae0;
   box-shadow: var(--shadow);
 }
-.filter-row.disabled { opacity: .55; }
 
 .filter-main { min-width: 0; }
 .filter-name {
