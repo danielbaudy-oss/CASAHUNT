@@ -182,11 +182,12 @@ async function notifyIfUnseen(filter, l) {
   const size  = l.size_m2   ? `${l.size_m2} m²` : "—";
   const rooms = l.rooms     ? `${l.rooms} hab`  : "—";
   const loc   = l.neighborhood || filter.city || "barcelona";
+  const sourceName = l.source === "fotocasa" ? "Fotocasa" : "Idealista";
   const caption =
     `<b>${escapeHtml(l.title || "New listing")}</b>\n` +
     `${price} · ${size} · ${rooms}\n` +
     `${escapeHtml(loc)}\n` +
-    `<a href="${l.url}">View on Idealista</a>`;
+    `<a href="${l.url}">View on ${sourceName}</a>`;
 
   if (l.photo_url) await sendPhoto(filter.chat_id, l.photo_url, caption);
   else             await sendMessage(filter.chat_id, caption);

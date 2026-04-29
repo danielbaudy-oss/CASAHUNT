@@ -5,19 +5,21 @@ const api = (path) =>
   `https://api.telegram.org/bot${config.telegramBotToken}/${path}`;
 
 export async function sendMessage(chatId, text, extra = {}) {
+  const body = {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: false,
+    ...extra,
+  };
   const res = await fetch(api("sendMessage"), {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: "HTML",
-      disable_web_page_preview: false,
-      ...extra,
-    }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`sendMessage ${res.status}: ${await res.text()}`);
-  return res.json();
+  const resBody = await res.text();
+  if (!res.ok) throw new Error(`sendMessage ${res.status}: ${resBody}`);
+  return JSON.parse(resBody);
 }
 
 export async function sendPhoto(chatId, photoUrl, caption) {
@@ -32,7 +34,8 @@ export async function sendPhoto(chatId, photoUrl, caption) {
     }),
   });
   if (!res.ok) {
-    // Photo can fail (CDN hotlink block). Fall back to text.
+    const errBody = await res.text();
+    console.log(`sendPhoto failed (${res.status}), falling back to sendMessage. Error: ${errBody}`);
     return sendMessage(chatId, caption);
   }
   return res.json();
