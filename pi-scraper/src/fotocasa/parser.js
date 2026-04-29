@@ -32,18 +32,21 @@ export function parseFotocasaResults(html, baseUrl) {
 }
 
 function parseCard($, $el, baseUrl) {
-  // Find the main link — href contains /es/alquiler/ and ends with a numeric ID.
-  const link = $el.find("a[href*='/es/alquiler/']").first();
+  // Find the main listing link — href contains /es/alquiler/vivienda/ and a numeric ID.
+  const link = $el.find("a[href*='/es/alquiler/vivienda/']").first();
   const href = link.attr("href") || "";
   if (!href) return null;
 
-  const idMatch = href.match(/\/(\d{5,})$/);
+  // ID is the numeric segment before /d at the end: .../181429297/d
+  const idMatch = href.match(/\/(\d{5,})\/d/);
   const external_id = idMatch ? idMatch[1] : null;
   if (!external_id) return null;
 
-  const url = href.startsWith("http")
-    ? href
-    : `https://www.fotocasa.es${href}`;
+  // Build clean URL (strip query params like from=list&multimedia=...)
+  const cleanHref = href.split("?")[0];
+  const url = cleanHref.startsWith("http")
+    ? cleanHref
+    : `https://www.fotocasa.es${cleanHref}`;
 
   // Title — usually in an h3.
   const title = ($el.find("h3").first().text() || "").trim() || null;
