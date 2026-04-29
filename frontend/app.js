@@ -230,7 +230,6 @@ $("#add-filter").addEventListener("click", async () => {
 });
 
 async function deleteFilter(id) {
-  if (!confirm("Delete this filter?")) return;
   const session = getSession();
   try {
     await callRest(`filters?id=eq.${id}`, { method: "DELETE", session });
@@ -360,10 +359,8 @@ async function searchNominatim(query) {
   const q = query.trim();
   if (q.length < 2) return [];
 
-  // Nominatim structured search — bias toward places (cities, districts, suburbs, neighbourhoods)
   const url = `https://nominatim.openstreetmap.org/search?` +
-    `q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&limit=10&accept-language=es,en` +
-    `&featuretype=settlement&layer=address` +
+    `q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&limit=12&accept-language=es,en` +
     `&countrycodes=es,pt,it,fr,de,nl,be,at,ch,gb,ie,se,no,dk,fi,pl,cz,hr,gr,ro,hu`;
 
   const res = await fetch(url, {
@@ -372,15 +369,12 @@ async function searchNominatim(query) {
   if (!res.ok) return [];
   const data = await res.json();
 
-  // Filter to useful place types and dedupe by osm_id
-  const validTypes = new Set(["city", "town", "village", "suburb", "neighbourhood", "borough", "quarter", "district", "municipality", "county"]);
   const seen = new Set();
   return data
     .filter((r) => {
       if (seen.has(r.osm_id)) return false;
       seen.add(r.osm_id);
-      // Accept if type or category matches a place
-      return validTypes.has(r.type) || validTypes.has(r.category) || r.class === "place" || r.class === "boundary";
+      return r.class === "place" || r.class === "boundary" || r.type === "administrative";
     })
     .slice(0, 8)
     .map((r) => ({
