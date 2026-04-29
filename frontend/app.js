@@ -372,8 +372,9 @@ async function searchNominatim(query) {
   const seen = new Set();
   return data
     .filter((r) => {
-      if (seen.has(r.osm_id)) return false;
-      seen.add(r.osm_id);
+      const key = shortName(r).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
       return r.class === "place" || r.class === "boundary" || r.type === "administrative";
     })
     .slice(0, 8)
