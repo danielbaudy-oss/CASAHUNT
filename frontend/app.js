@@ -1,42 +1,7 @@
 import { config } from "./config.js";
-import { NEIGHBORHOODS_BCN, normalizeNeighborhoodSlugs } from "./neighborhoods.js";
 
 const SESSION_KEY = "casahunt.session";
 const $ = (sel) => document.querySelector(sel);
-
-// ── Indexes over the neighborhood data ─────────────────────────────────────
-
-const BY_SLUG = new Map(NEIGHBORHOODS_BCN.map((n) => [n.slug, n]));
-const DISTRICTS = (() => {
-  const map = new Map();
-  for (const n of NEIGHBORHOODS_BCN) {
-    if (!map.has(n.district)) map.set(n.district, []);
-    map.get(n.district).push(n);
-  }
-  return [...map.entries()].map(([district, items]) => ({
-    type: "district",
-    slug: "district:" + districtSlug(district),
-    name: district,
-    items,
-    search: (district + " " + items.map((n) => n.name).join(" ")).toLowerCase(),
-  }));
-})();
-
-function districtSlug(name) {
-  return name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-// Flat searchable index (districts + neighborhoods).
-const ALL_LOCATIONS = [
-  ...DISTRICTS,
-  ...NEIGHBORHOODS_BCN.map((n) => ({
-    type: "neighborhood",
-    slug: n.slug,
-    name: n.name,
-    district: n.district,
-    search: (n.name + " " + n.district).toLowerCase(),
-  })),
-];
 
 // ── Session plumbing ────────────────────────────────────────────────────────
 
@@ -119,22 +84,14 @@ $("#verify-code").addEventListener("click", async () => {
   } catch (e) { authMsg.className = "msg error"; authMsg.textContent = String(e.message || e); }
 });
 
-$("#sign-out").addEventListener("click", () => { setSession(null); show("auth"); });
-
 // ── Settings ────────────────────────────────────────────────────────────────
 
 $("#settings-btn").addEventListener("click", () => {
+  const chatId = localStorage.getItem("casahunt.chat_id") || "—";
   const session = getSession();
-  if (session) {
-    // Extract chat_id from the session — we stored it when we logged in.
-    const chatId = localStorage.getItem("casahunt.chat_id") || "—";
-    $("#settings-chat-id").textContent = chatId;
-    $("#settings-connected").hidden = false;
-    $("#settings-disconnected").hidden = true;
-  } else {
-    $("#settings-connected").hidden = true;
-    $("#settings-disconnected").hidden = false;
-  }
+  $("#settings-chat-id").textContent = chatId;
+  $("#settings-connected").hidden = !session;
+  $("#settings-disconnected").hidden = !!session;
   show("settings");
 });
 
@@ -143,9 +100,7 @@ $("#settings-back").addEventListener("click", async () => {
   if (session && new Date(session.expires_at) > new Date()) {
     await renderFilters();
     show("filters");
-  } else {
-    show("auth");
-  }
+  } else show("auth");
 });
 
 $("#settings-disconnect").addEventListener("click", () => {
@@ -175,34 +130,12 @@ function fmtSizeRange(f) {
   return null;
 }
 
-// Collapse selected neighborhood slugs back into a mix of full districts + stray neighborhoods.
-function collapseLocations(slugs) {
-  const set = new Set(slugs);
-  const districts = [];
-  const leftover = [];
-  for (const d of DISTRICTS) {
-    const all = d.items.map((i) => i.slug);
-    const allIn = all.every((s) => set.has(s));
-    if (allIn && all.length) {
-      districts.push(d.name);
-      all.forEach((s) => set.delete(s));
-    }
-  }
-  for (const s of set) {
-    const n = BY_SLUG.get(s);
-    if (n) leftover.push(n.name);
-  }
-  return { districts, neighborhoods: leftover };
-}
-
-function fmtLocations(f, max = 4) {
-  const slugs = f.neighborhoods || [];
-  if (!slugs.length) return "all locations";
-  const { districts, neighborhoods } = collapseLocations(slugs);
-  const parts = [...districts.map((n) => n), ...neighborhoods];
-  if (!parts.length) return "all locations";
-  if (parts.length <= max) return parts.join(", ");
-  return `${parts.slice(0, max).join(", ")} +${parts.length - max} more`;
+function fmtLocations(f) {
+  const locs = f.locations || [];
+  if (!locs.length) return "all locations";
+  const names = locs.map((l) => l.name || l.display_name || "?");
+  if (names.length <= 3) return names.join(", ");
+  return `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
 }
 
 function pill(text, { muted = false } = {}) {
@@ -230,7 +163,6 @@ function renderFilterRow(f) {
   const summary = document.createElement("div");
   summary.className = "filter-summary";
 
-  summary.appendChild(pill(f.city, { muted: true }));
   summary.appendChild(pill((f.sources || []).join(" + "), { muted: false }));
   [fmtPriceRange(f), fmtRoomsRange(f), fmtSizeRange(f)]
     .filter(Boolean)
@@ -289,7 +221,7 @@ $("#add-filter").addEventListener("click", async () => {
   try {
     const [created] = await callRest("filters", {
       method: "POST",
-      body: { name: "new filter", city: "barcelona", sources: ["idealista"] },
+      body: { name: "new filter", city: "barcelona", sources: ["idealista", "fotocasa"], locations: [] },
       session,
     });
     await renderFilters();
@@ -314,7 +246,7 @@ const dlgTitle = $("#dlg-title");
 const dlgMsg   = $("#dlg-msg");
 
 let editingId = null;
-let selectedSlugs = new Set();   // ← canonical state: neighborhood slugs
+let selectedLocations = [];  // array of { name, display_name, osm_id, osm_type, lat, lng, type, country_code }
 
 function openEditDialog(f) {
   editingId = f.id;
@@ -322,7 +254,6 @@ function openEditDialog(f) {
   dlgMsg.textContent = "";
 
   dlgForm.elements.name.value         = f.name || "";
-  dlgForm.elements.city.value         = f.city || "barcelona";
   dlgForm.elements.price_min.value    = f.price_min   ?? "";
   dlgForm.elements.price_max.value    = f.price_max   ?? "";
   dlgForm.elements.rooms_min.value    = f.rooms_min   ?? "";
@@ -333,7 +264,7 @@ function openEditDialog(f) {
   const srcs = new Set(f.sources || []);
   dlgForm.querySelectorAll('input[name="sources"]').forEach((cb) => { cb.checked = srcs.has(cb.value); });
 
-  selectedSlugs = new Set(normalizeNeighborhoodSlugs(f.neighborhoods));
+  selectedLocations = Array.isArray(f.locations) ? [...f.locations] : [];
   renderLocationChips();
   locInput.value = "";
   locDropdown.hidden = true;
@@ -350,7 +281,7 @@ dlgForm.addEventListener("submit", async (e) => {
   const fd = new FormData(dlgForm);
   const patch = {
     name:          (fd.get("name") || "").toString().trim() || "untitled",
-    city:          (fd.get("city") || "barcelona").toString().trim(),
+    city:          selectedLocations.length ? selectedLocations[0].name : "barcelona",
     enabled:       true,
     price_min:     numOrNull(fd.get("price_min")),
     price_max:     numOrNull(fd.get("price_max")),
@@ -359,7 +290,8 @@ dlgForm.addEventListener("submit", async (e) => {
     size_min_m2:   numOrNull(fd.get("size_min_m2")),
     size_max_m2:   numOrNull(fd.get("size_max_m2")),
     sources:       fd.getAll("sources"),
-    neighborhoods: [...selectedSlugs],
+    locations:     selectedLocations,
+    neighborhoods: [], // deprecated, kept for backward compat
   };
 
   if (!patch.sources.length) {
@@ -381,23 +313,22 @@ function numOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-// ── Location search (Idealista-style autocomplete) ─────────────────────────
+// ── Location search (Nominatim-powered) ─────────────────────────────────────
 
 const locWrap     = $("#loc-wrap");
 const locInput    = $("#loc-input");
 const locChips    = $("#loc-chips");
 const locDropdown = $("#loc-dropdown");
 let   activeIdx   = -1;
+let   searchTimer = null;
 
 function renderLocationChips() {
   locChips.innerHTML = "";
-  const { districts, neighborhoods } = collapseSelected();
-
-  for (const d of districts) {
-    locChips.appendChild(makeChip(d.name, () => removeDistrict(d)));
-  }
-  for (const n of neighborhoods) {
-    locChips.appendChild(makeChip(n.name, () => { selectedSlugs.delete(n.slug); renderLocationChips(); renderLocDropdown(locInput.value); }));
+  for (const loc of selectedLocations) {
+    locChips.appendChild(makeChip(loc.name, () => {
+      selectedLocations = selectedLocations.filter((l) => l.osm_id !== loc.osm_id);
+      renderLocationChips();
+    }));
   }
 }
 
@@ -414,125 +345,143 @@ function makeChip(label, onRemove) {
   return chip;
 }
 
-function collapseSelected() {
-  // Returns which districts are fully selected + remaining stray neighborhoods.
-  const remaining = new Set(selectedSlugs);
-  const districts = [];
-  for (const d of DISTRICTS) {
-    const slugs = d.items.map((i) => i.slug);
-    if (slugs.every((s) => remaining.has(s))) {
-      districts.push(d);
-      slugs.forEach((s) => remaining.delete(s));
-    }
-  }
-  const neighborhoods = [...remaining].map((s) => BY_SLUG.get(s)).filter(Boolean);
-  return { districts, neighborhoods };
-}
-
-function removeDistrict(d) {
-  d.items.forEach((i) => selectedSlugs.delete(i.slug));
-  renderLocationChips();
-  renderLocDropdown(locInput.value);
-}
-
-function isDistrictFullySelected(d) {
-  return d.items.every((i) => selectedSlugs.has(i.slug));
-}
-
-function highlight(text, query) {
-  if (!query) return escapeHtml(text);
-  const q = query.trim();
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0) return escapeHtml(text);
-  return escapeHtml(text.slice(0, idx)) + "<mark>" + escapeHtml(text.slice(idx, idx + q.length)) + "</mark>" + escapeHtml(text.slice(idx + q.length));
-}
-
 function escapeHtml(s) {
   return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-function renderLocDropdown(query) {
-  const q = query.trim().toLowerCase();
+function highlight(text, query) {
+  if (!query) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return escapeHtml(text);
+  return escapeHtml(text.slice(0, idx)) + "<mark>" + escapeHtml(text.slice(idx, idx + query.length)) + "</mark>" + escapeHtml(text.slice(idx + query.length));
+}
 
-  const results = ALL_LOCATIONS.filter((loc) => {
-    if (loc.type === "district") return isDistrictFullySelected(loc) === false && (!q || loc.search.includes(q));
-    return !selectedSlugs.has(loc.slug) && (!q || loc.search.includes(q));
+async function searchNominatim(query) {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  // Nominatim structured search — bias toward places (cities, districts, suburbs, neighbourhoods)
+  const url = `https://nominatim.openstreetmap.org/search?` +
+    `q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&limit=10&accept-language=es,en` +
+    `&featuretype=settlement&layer=address` +
+    `&countrycodes=es,pt,it,fr,de,nl,be,at,ch,gb,ie,se,no,dk,fi,pl,cz,hr,gr,ro,hu`;
+
+  const res = await fetch(url, {
+    headers: { "User-Agent": "cazapiso/1.0 (https://github.com/danielbaudy-oss/CAZAPISO)" },
   });
+  if (!res.ok) return [];
+  const data = await res.json();
 
-  // Sort: districts first, then neighborhoods; exact prefix matches rank higher within each.
-  results.sort((a, b) => {
-    if (a.type !== b.type) return a.type === "district" ? -1 : 1;
-    const aStart = q && a.name.toLowerCase().startsWith(q) ? 0 : 1;
-    const bStart = q && b.name.toLowerCase().startsWith(q) ? 0 : 1;
-    if (aStart !== bStart) return aStart - bStart;
-    return a.name.localeCompare(b.name);
-  });
+  // Filter to useful place types and dedupe by osm_id
+  const validTypes = new Set(["city", "town", "village", "suburb", "neighbourhood", "borough", "quarter", "district", "municipality", "county"]);
+  const seen = new Set();
+  return data
+    .filter((r) => {
+      if (seen.has(r.osm_id)) return false;
+      seen.add(r.osm_id);
+      // Accept if type or category matches a place
+      return validTypes.has(r.type) || validTypes.has(r.category) || r.class === "place" || r.class === "boundary";
+    })
+    .slice(0, 8)
+    .map((r) => ({
+      name: shortName(r),
+      display_name: r.display_name,
+      osm_id: String(r.osm_id),
+      osm_type: r.osm_type,
+      lat: parseFloat(r.lat),
+      lng: parseFloat(r.lon),
+      type: r.type || r.addresstype || "place",
+      country_code: r.address?.country_code || "",
+    }));
+}
 
-  const top = results.slice(0, 20);
-  activeIdx = top.length ? 0 : -1;
+function shortName(r) {
+  // Build a concise name: "El Poblenou, Barcelona" or "Madrid, Spain"
+  const parts = [];
+  const a = r.address || {};
+  const primary = a.neighbourhood || a.suburb || a.quarter || a.borough || a.district ||
+                  a.city || a.town || a.village || a.municipality || r.name || "";
+  if (primary) parts.push(primary);
+
+  // Add parent context
+  const parent = (a.city || a.town || a.municipality || "");
+  if (parent && parent !== primary) parts.push(parent);
+  else {
+    const region = a.state || a.county || a.country || "";
+    if (region) parts.push(region);
+  }
+
+  return parts.join(", ") || r.display_name?.split(",").slice(0, 2).join(",") || "Unknown";
+}
+
+function renderLocDropdown(results, query) {
   locDropdown.innerHTML = "";
+  activeIdx = results.length ? 0 : -1;
 
-  if (!top.length) {
+  if (!results.length) {
     const empty = document.createElement("div");
     empty.className = "loc-empty";
-    empty.textContent = q ? "No matches." : "Start typing…";
+    empty.textContent = query ? "No results." : "";
     locDropdown.appendChild(empty);
-  } else {
-    top.forEach((r, i) => {
-      const row = document.createElement("div");
-      row.className = "loc-result" + (i === activeIdx ? " active" : "");
-      row.dataset.idx = i;
-
-      const name = document.createElement("div");
-      name.className = "loc-result-name";
-      const typeBadge = `<span class="loc-result-type ${r.type}">${r.type === "district" ? "District" : "Neighborhood"}</span>`;
-      name.innerHTML = typeBadge + highlight(r.name, q);
-      row.appendChild(name);
-
-      const meta = document.createElement("div");
-      meta.className = "loc-result-meta";
-      if (r.type === "district") meta.textContent = `${r.items.length} neighborhoods`;
-      else meta.textContent = r.district;
-      row.appendChild(meta);
-
-      row.addEventListener("mousedown", (e) => { e.preventDefault(); pickLocation(r); });
-      locDropdown.appendChild(row);
-    });
+    locDropdown.hidden = !query;
+    return;
   }
+
+  const alreadySelected = new Set(selectedLocations.map((l) => l.osm_id));
+
+  results.forEach((r, i) => {
+    if (alreadySelected.has(r.osm_id)) return;
+    const row = document.createElement("div");
+    row.className = "loc-result" + (i === activeIdx ? " active" : "");
+    row.dataset.idx = i;
+
+    const name = document.createElement("div");
+    name.className = "loc-result-name";
+    const typeBadge = `<span class="loc-result-type">${r.type}</span>`;
+    name.innerHTML = typeBadge + highlight(r.name, query);
+    row.appendChild(name);
+
+    const meta = document.createElement("div");
+    meta.className = "loc-result-meta";
+    meta.textContent = r.display_name?.split(",").slice(1, 4).join(",").trim() || "";
+    row.appendChild(meta);
+
+    row.addEventListener("mousedown", (e) => { e.preventDefault(); pickLocation(r); });
+    locDropdown.appendChild(row);
+  });
 
   locDropdown.hidden = false;
 }
 
 function pickLocation(r) {
-  if (r.type === "district") {
-    r.items.forEach((i) => selectedSlugs.add(i.slug));
-  } else {
-    selectedSlugs.add(r.slug);
-  }
+  selectedLocations.push(r);
   locInput.value = "";
   renderLocationChips();
   locDropdown.hidden = true;
   locInput.focus();
 }
 
-locInput.addEventListener("focus", () => {
-  locWrap.classList.add("focus");
-  // Only open the dropdown if there's something typed.
-  if (locInput.value.trim()) renderLocDropdown(locInput.value);
-});
+locInput.addEventListener("focus", () => { locWrap.classList.add("focus"); });
 locInput.addEventListener("blur", () => {
   locWrap.classList.remove("focus");
   setTimeout(() => { locDropdown.hidden = true; }, 150);
 });
+
 locInput.addEventListener("input", (e) => {
   const v = e.target.value;
-  if (!v.trim()) { locDropdown.hidden = true; return; }
-  renderLocDropdown(v);
+  if (!v.trim() || v.trim().length < 2) { locDropdown.hidden = true; return; }
+  // Debounce: wait 300ms after last keystroke
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    try {
+      const results = await searchNominatim(v);
+      renderLocDropdown(results, v);
+    } catch { locDropdown.hidden = true; }
+  }, 300);
 });
 
 locInput.addEventListener("keydown", (e) => {
   const rows = locDropdown.querySelectorAll(".loc-result");
-  if (!rows.length && e.key !== "Backspace") return;
   if (e.key === "ArrowDown") {
     e.preventDefault();
     activeIdx = Math.min(activeIdx + 1, rows.length - 1);
@@ -550,13 +499,9 @@ locInput.addEventListener("keydown", (e) => {
     }
   } else if (e.key === "Escape") {
     locDropdown.hidden = true;
-  } else if (e.key === "Backspace" && !locInput.value) {
-    // Remove last chip
-    const { districts, neighborhoods } = collapseSelected();
-    if (neighborhoods.length) selectedSlugs.delete(neighborhoods[neighborhoods.length - 1].slug);
-    else if (districts.length) districts[districts.length - 1].items.forEach((i) => selectedSlugs.delete(i.slug));
+  } else if (e.key === "Backspace" && !locInput.value && selectedLocations.length) {
+    selectedLocations.pop();
     renderLocationChips();
-    renderLocDropdown(locInput.value);
   }
 });
 
