@@ -51,10 +51,17 @@ function parseCard($, $el, baseUrl) {
   // Title — usually in an h3.
   const title = ($el.find("h3").first().text() || "").trim() || null;
 
-  // Price — look for text matching €/mes or just a number with €.
-  const priceText = $el.find("[class*='display']").first().text() ||
-                    $el.find("[class*='price']").first().text() || "";
-  const price_eur = toInt(priceText);
+  // Price — Fotocasa renders price like "1.955 €/mes" or "1.200 €/mes".
+  // Try class-based selector first, then fall back to regex on card text.
+  let priceText = $el.find("[class*='display']").first().text() ||
+                  $el.find("[class*='price']").first().text() || "";
+  let price_eur = toInt(priceText);
+  if (!price_eur) {
+    // Fallback: find "N.NNN €" or "N €" pattern in the card text.
+    const cardText = $el.text();
+    const priceMatch = cardText.match(/([\d.]+)\s*€/);
+    if (priceMatch) price_eur = toInt(priceMatch[1]);
+  }
 
   // Details — rooms, m², floor in <ul><li> items.
   let rooms = null, size_m2 = null;

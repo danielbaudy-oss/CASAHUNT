@@ -114,7 +114,7 @@ async function runFilter(filter) {
     try {
       await notifyIfUnseen(filter, l);
     } catch (e) {
-      log("notify failed", { id: l.external_id, err: String(e) });
+      log("notify failed", { id: l.external_id, err: fmtErr(e) });
     }
   }
 }
@@ -190,6 +190,7 @@ async function notifyIfUnseen(filter, l) {
 
   if (l.photo_url) await sendPhoto(filter.chat_id, l.photo_url, caption);
   else             await sendMessage(filter.chat_id, caption);
+  log("notified", { source: l.source, id: l.external_id, chatId: filter.chat_id });
 }
 
 function escapeHtml(s) {
