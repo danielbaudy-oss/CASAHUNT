@@ -31,6 +31,11 @@ function fmtErr(e) {
 }
 
 async function main() {
+  // Random startup jitter (0–90s) so we don't always hit at exact :00/:15/:30/:45.
+  const jitter = Math.floor(Math.random() * 90000);
+  log("startup jitter", { ms: jitter });
+  await sleep(jitter);
+
   const startedAt = Date.now();
   log("run start", { dryRun: config.dryRun, useHeadless: config.useHeadless });
 
@@ -48,7 +53,7 @@ async function main() {
       log("filter failed", { id: filter.id, name: filter.name, err: fmtErr(e) });
     }
     // Delay between filters to avoid triggering anti-bot on rapid sequential requests.
-    await sleep(3000 + Math.random() * 2000);
+    await sleep(5000 + Math.random() * 5000);
   }
 
   log("run done", { ms: Date.now() - startedAt });
@@ -59,7 +64,13 @@ async function runFilter(filter) {
   const scraped = [];
 
   // ── Idealista ──
-  if (srcs.includes("idealista")) {
+  // Skip ~2 out of 3 runs to reduce frequency and avoid anti-bot blocks.
+  // Effective interval: ~30–45 min instead of 15.
+  const skipIdealista = !srcs.includes("idealista") || Math.random() > 0.4;
+  if (srcs.includes("idealista") && skipIdealista) {
+    log("idealista: skipping this run (rate limiting)");
+  }
+  if (srcs.includes("idealista") && !skipIdealista) {
     const urls = buildSearchUrls(filter, NEIGHBORHOODS_BCN);
     log("idealista urls", { id: filter.id, name: filter.name, n: urls.length });
     for (const url of urls) {

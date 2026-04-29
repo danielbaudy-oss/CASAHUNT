@@ -1,8 +1,7 @@
-// Puppeteer fallback for when Idealista blocks plain fetch.
-// Keep this isolated — puppeteer is an optionalDependency so plain-fetch
-// deploys stay lightweight on the Pi.
+// Puppeteer fallback for when sites block plain fetch.
+// Configured to look like a real desktop browser session.
 
-import { config } from "../config.js";
+import { randomUA } from "../useragents.js";
 
 let browserPromise = null;
 
@@ -10,11 +9,9 @@ async function getBrowser() {
   if (!browserPromise) {
     browserPromise = (async () => {
       const puppeteer = await import("puppeteer");
-      // Use a system-installed Chromium on ARM Pis; puppeteer's bundled Chrome
-      // is x86_64-only. Set PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium in .env
-      // (default on Raspberry Pi OS).
+      const mod = puppeteer.default || puppeteer;
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
-      return puppeteer.launch({
+      return mod.launch({
         headless: "new",
         executablePath,
         args: [
@@ -22,6 +19,8 @@ async function getBrowser() {
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
           "--disable-gpu",
+          "--disable-blink-features=AutomationControlled",
+          "--window-size=1366,768",
         ],
       });
     })();
@@ -33,11 +32,32 @@ export async function fetchWithHeadless(url) {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    await page.setUserAgent(config.userAgent);
-    await page.setExtraHTTPHeaders({ "accept-language": "es-ES,es;q=0.9" });
+    const ua = randomUA();
+    await page.setUserAgent(ua);
+    await page.setViewport({ width: 1366, height: 768 });
+    await page.setExtraHTTPHeaders({
+      "accept-language": "es-ES,es;q=0.9,ca;q=0.8,en;q=0.7",
+      "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Linux"',
+    });
+
+    // Override navigator.webdriver to avoid detection.
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+      // Fake plugins array.
+      Object.defineProperty(navigator, "plugins", {
+        get: () => [1, 2, 3, 4, 5],
+      });
+      // Fake languages.
+      Object.defineProperty(navigator, "languages", {
+        get: () => ["es-ES", "es", "ca", "en"],
+      });
+    });
+
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    // Give JS a beat to finish hydrating
-    await new Promise((r) => setTimeout(r, 1500));
+    // Random human-like wait (1.5–3.5s).
+    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
     return await page.content();
   } finally {
     await page.close();
