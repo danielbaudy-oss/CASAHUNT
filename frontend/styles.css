@@ -46,11 +46,11 @@ main { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 h1, h2, h3 { letter-spacing: -0.01em; color: var(--fg); }
 h1 {
   margin: 0 0 .15rem;
-  font-size: 1.85rem;
-  font-weight: 700;
-  font-family: 'Space Mono', monospace;
+  font-size: 1.6rem;
+  font-weight: 400;
+  font-family: 'Press Start 2P', cursive;
   color: #1a1a1a;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.04em;
   text-transform: lowercase;
 }
 .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
