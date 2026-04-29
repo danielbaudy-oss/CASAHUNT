@@ -52,6 +52,9 @@ h1 {
   color: #1a1a1a;
   letter-spacing: 0.04em;
   text-transform: lowercase;
+  transform: scaleY(1.35);
+  transform-origin: left bottom;
+  display: inline-block;
 }
 .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
 
