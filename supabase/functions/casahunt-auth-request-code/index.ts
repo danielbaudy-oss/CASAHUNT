@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     await sendMessage(
       TG_TOKEN,
       chat_id,
-      `casahunt login code: <b>${code}</b>\nExpires in 10 minutes.`,
+      `cazapiso login code: <b>${code}</b>\nExpires in 10 minutes.`,
     );
 
     return json({ ok: true });

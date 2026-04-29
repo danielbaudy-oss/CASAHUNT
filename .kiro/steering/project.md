@@ -1,7 +1,7 @@
 ---
 inclusion: always
 ---
-# casahunt — Real estate alerts
+# cazapiso — Real estate alerts
 
 Scrapes Idealista / Fotocasa for new rental listings matching user filters, sends Telegram alerts.
 
